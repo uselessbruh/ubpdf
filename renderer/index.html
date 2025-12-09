@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="../assets/logo.png" alt="Logo" class="logo-img" />
+        <h1 class="logo">PDF Studio</h1>
+        <p class="tagline">All-in-one PDF tools</p>
+      </div>
+
+      <nav class="tool-list">
+        <button class="tool-btn active" data-tool="merge">
+          <span class="tool-icon">📄</span>
+          <span class="tool-name">Merge PDF</span>
+        </button>
+        <button class="tool-btn" data-tool="split">
+          <span class="tool-icon">✂️</span>
+          <span class="tool-name">Split PDF</span>
+        </button>
+        <button class="tool-btn" data-tool="organize">
+          <span class="tool-icon">🔄</span>
+          <span class="tool-name">Organize Pages</span>
+        </button>
+        <button class="tool-btn" data-tool="watermark">
+          <span class="tool-icon">💧</span>
+          <span class="tool-name">Add Watermark</span>
+        </button>
+        <button class="tool-btn" data-tool="pageNumbers">
+          <span class="tool-icon">🔢</span>
+          <span class="tool-name">Add Page Numbers</span>
+        </button>
+        <button class="tool-btn" data-tool="imageToPdf">
+          <span class="tool-icon">🖼️</span>
+          <span class="tool-name">Images → PDF</span>
+        </button>
+        <button class="tool-btn" data-tool="pdfToImage">
+          <span class="tool-icon">📸</span>
+          <span class="tool-name">PDF → Images</span>
+        </button>
+        <button class="tool-btn" data-tool="protect">
+          <span class="tool-icon">🔒</span>
+          <span class="tool-name">Protect PDF</span>
+        </button>
+        <button class="tool-btn" data-tool="unlock">
+          <span class="tool-icon">🔓</span>
+          <span class="tool-name">Unlock PDF</span>
+        </button>
+        <button class="tool-btn" data-tool="compress">
+          <span class="tool-icon">🗜️</span>
+          <span class="tool-name">Compress PDF</span>
+        </button>
+        <button class="tool-btn" data-tool="editMetadata">
+          <span class="tool-icon">📝</span>
+          <span class="tool-name">Edit Metadata</span>
+        </button>
+        <button class="tool-btn" data-tool="convert">
+          <span class="tool-icon">🔄</span>
+          <span class="tool-name">Convert Files</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Merge Tool -->
+      <div id="merge-tool" class="tool-panel active">
+        <div class="tool-header">
+          <h2>Merge PDF Files</h2>
+          <p class="tool-description">Combine multiple PDFs into one document</p>
+        </div>
+
+        <div class="split-dropzone" id="mergeDropzone">
+          <div class="dropzone-content">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-text">
+              <strong>Drop PDF files here</strong>
+              <span>or</span>
+            </div>
+            <button id="selectMergeFilesBtn" class="btn-secondary">Browse Files</button>
+          </div>
+        </div>
+        <input type="file" multiple accept=".pdf" id="files" style="display: none;" />
+
+        <div id="fileList" class="file-list"></div>
+
+        <div class="action-bar" id="mergeActionBar" style="display: none;">
+          <button id="mergeBtn" class="btn-primary">
+            <span>📥</span> Merge PDFs
+          </button>
+        </div>
+      </div>
+
+      <!-- Split Tool -->
+      <div id="split-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Split PDF</h2>
+          <p class="tool-description">Extract pages or split into multiple documents</p>
+        </div>
+
+        <div class="split-container">
+          <div class="split-section">
+            <div class="split-dropzone" id="splitDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">📄</div>
+                <div class="dropzone-text">
+                  <strong>Drop PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectPdfBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="splitFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="pdfInfo" class="pdf-info-card"></div>
+          </div>
+
+          <div id="splitOptions" class="split-options" style="display: none;">
+            <div class="split-modes">
+              <button class="mode-btn active" data-mode="range">
+                <span class="mode-icon">✂️</span>
+                <div class="mode-text">
+                  <strong>Split by Range</strong>
+                  <small>Custom page ranges</small>
+                </div>
+              </button>
+              <button class="mode-btn" data-mode="fixed">
+                <span class="mode-icon">📑</span>
+                <div class="mode-text">
+                  <strong>Split Every N Pages</strong>
+                  <small>Fixed intervals</small>
+                </div>
+              </button>
+              <button class="mode-btn" data-mode="each">
+                <span class="mode-icon">📃</span>
+                <div class="mode-text">
+                  <strong>Extract Each Page</strong>
+                  <small>Separate files</small>
+                </div>
+              </button>
+            </div>
+
+            <!-- Range Mode -->
+            <div id="rangeMode" class="mode-content active">
+              <div class="option-card">
+                <div class="card-header">
+                  <h3>Page Ranges</h3>
+                  <button id="addRangeBtn" class="btn-small">+ Add Range</button>
+                </div>
+
+                <div id="rangeList" class="range-list"></div>
+              </div>
+            </div>
+
+            <!-- Fixed Interval Mode -->
+            <div id="fixedMode" class="mode-content">
+              <div class="option-card">
+                <h3>Split Every N Pages</h3>
+                <div class="fixed-config">
+                  <label>Pages per file:</label>
+                  <input type="number" id="pagesPerFile" value="5" min="1" class="number-input" />
+                  <p class="config-hint">Each output file will contain <strong id="pagesDisplay">5</strong> pages</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Extract Each Page Mode -->
+            <div id="eachMode" class="mode-content">
+              <div class="option-card">
+                <h3>Extract Each Page</h3>
+                <p class="config-hint">Each page will be saved as a separate PDF file</p>
+                <div class="info-box">
+                  <span>📊</span>
+                  <div>
+                    <strong>Output:</strong>
+                    <p id="eachPageInfo">Will create 0 individual PDF files</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-bar">
+              <button id="splitBtn" class="btn-primary" disabled>
+                <span>✂️</span> Split PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="organize-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Organize Pages</h2>
+          <p class="tool-description">Reorder, rotate, and delete pages from your PDF</p>
+        </div>
+
+        <div class="organize-container">
+          <div class="organize-section">
+            <div class="organize-dropzone" id="organizeDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">📑</div>
+                <div class="dropzone-text">
+                  <strong>Drop PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectOrganizePdfBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="organizeFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="organizePdfInfo" class="pdf-info-card"></div>
+          </div>
+
+          <div id="organizeOptions" class="organize-options" style="display: none;">
+            <div class="toolbar">
+              <div class="toolbar-section">
+                <span class="toolbar-label">Selected: <strong id="selectedCount">0</strong></span>
+              </div>
+              <div class="toolbar-section">
+                <button id="rotateLeftBtn" class="toolbar-btn" title="Rotate Left 90°">
+                  <span>↶</span> Rotate Left
+                </button>
+                <button id="rotateRightBtn" class="toolbar-btn" title="Rotate Right 90°">
+                  <span>↷</span> Rotate Right
+                </button>
+                <button id="deleteSelectedBtn" class="toolbar-btn danger" title="Delete Selected">
+                  <span>🗑️</span> Delete
+                </button>
+              </div>
+            </div>
+
+            <div id="pageGrid" class="page-grid"></div>
+
+            <div class="action-bar">
+              <button id="organizeBtn" class="btn-primary">
+                <span>💾</span> Save Organized PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="watermark-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Add Watermark</h2>
+          <p class="tool-description">Add text watermark to your PDF pages</p>
+        </div>
+
+        <div class="watermark-container">
+          <div class="watermark-section">
+            <div class="watermark-dropzone" id="watermarkDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">💧</div>
+                <div class="dropzone-text">
+                  <strong>Drop PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectWatermarkPdfBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="watermarkFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="watermarkPdfInfo" class="pdf-info-card"></div>
+          </div>
+
+          <div id="watermarkOptions" class="watermark-options" style="display: none;">
+            <div class="option-card">
+              <h3>Watermark Type</h3>
+
+              <div class="type-selector">
+                <button class="type-btn active" data-type="text">
+                  <span>📝</span> Text
+                </button>
+                <button class="type-btn" data-type="image">
+                  <span>🖼️</span> Image
+                </button>
+              </div>
+
+              <!-- Text Options -->
+              <div id="textOptions" class="type-options">
+                <div class="form-group">
+                  <label>Watermark Text</label>
+                  <input type="text" id="watermarkText" class="text-input" placeholder="Enter watermark text"
+                    value="CONFIDENTIAL" />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Font Style</label>
+                    <select id="watermarkFont" class="select-input">
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Helvetica-Bold">Helvetica Bold</option>
+                      <option value="Helvetica-Oblique">Helvetica Oblique</option>
+                      <option value="Helvetica-BoldOblique">Helvetica Bold Oblique</option>
+                      <option value="Times-Roman">Times Roman</option>
+                      <option value="Times-Bold">Times Bold</option>
+                      <option value="Times-Italic">Times Italic</option>
+                      <option value="Times-BoldItalic">Times Bold Italic</option>
+                      <option value="Courier">Courier</option>
+                      <option value="Courier-Bold">Courier Bold</option>
+                      <option value="Courier-Oblique">Courier Oblique</option>
+                      <option value="Courier-BoldOblique">Courier Bold Oblique</option>
+                      <option value="Symbol">Symbol</option>
+                      <option value="ZapfDingbats">ZapfDingbats</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Font Size</label>
+                    <input type="number" id="watermarkFontSize" class="number-input" value="48" min="10" max="200" />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Color</label>
+                    <input type="color" id="watermarkColor" class="color-input" value="#808080" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Image Options -->
+              <div id="imageOptions" class="type-options" style="display: none;">
+                <div class="form-group">
+                  <label>Watermark Image</label>
+                  <div class="image-selector">
+                    <button id="selectImageBtn" class="btn-secondary">📁 Select Image</button>
+                    <span id="selectedImageName" class="image-name">No image selected</span>
+                  </div>
+                  <input type="file" id="watermarkImageInput" accept="image/png,image/jpeg" style="display: none;" />
+                </div>
+
+                <div class="form-group">
+                  <label>Image Scale (%)</label>
+                  <input type="number" id="watermarkScale" class="number-input" value="30" min="1" max="500" />
+                </div>
+              </div>
+
+              <!-- Common Options -->
+              <div class="common-options">
+                <div class="form-group">
+                  <label>Opacity</label>
+                  <input type="range" id="watermarkOpacity" min="0" max="100" value="30" class="range-input" />
+                  <span class="range-value" id="opacityValue">30%</span>
+                </div>
+
+                <div class="form-group">
+                  <label>Rotation (degrees)</label>
+                  <input type="number" id="watermarkRotation" class="number-input" value="0" min="-360" max="360" />
+                </div>
+
+                <div class="form-group">
+                  <label>Position</label>
+                  <div class="position-grid">
+                    <button class="position-btn" data-position="topLeft">↖️</button>
+                    <button class="position-btn" data-position="top">⬆️</button>
+                    <button class="position-btn" data-position="topRight">↗️</button>
+                    <button class="position-btn active" data-position="center">⊙</button>
+                    <button class="position-btn" data-position="diagonal">⊙</button>
+                    <button class="position-btn" data-position="custom">🎯</button>
+                    <button class="position-btn" data-position="bottomLeft">↙️</button>
+                    <button class="position-btn" data-position="bottom">⬇️</button>
+                    <button class="position-btn" data-position="bottomRight">↘️</button>
+                  </div>
+                </div>
+
+                <div id="customPosition" class="custom-position" style="display: none;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>X Position (%)</label>
+                      <input type="number" id="customX" class="number-input" value="50" min="0" max="100" />
+                    </div>
+                    <div class="form-group">
+                      <label>Y Position (%)</label>
+                      <input type="number" id="customY" class="number-input" value="50" min="0" max="100" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="preview-box">
+                <div class="preview-label">Preview</div>
+                <div id="watermarkPreview" class="watermark-preview">
+                  <span id="previewText">CONFIDENTIAL</span>
+                  <img id="previewImage" style="display: none;" alt="Watermark" />
+                </div>
+              </div>
+            </div>
+
+            <div class="action-bar">
+              <button id="watermarkBtn" class="btn-primary">
+                <span>💧</span> Add Watermark
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageNumbers-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Add Page Numbers</h2>
+          <p class="tool-description">Add page numbers to your PDF pages</p>
+        </div>
+
+        <div class="pageNumbers-container">
+          <div class="pageNumbers-section">
+            <div class="pageNumbers-dropzone" id="pageNumbersDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">🔢</div>
+                <div class="dropzone-text">
+                  <strong>Drop PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectPageNumbersPdfBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="pageNumbersFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="pageNumbersPdfInfo" class="pdf-info-card"></div>
+          </div>
+
+          <div id="pageNumbersOptions" class="pageNumbers-options" style="display: none;">
+            <div class="option-card">
+              <h3>Page Number Settings</h3>
+
+              <div class="form-group">
+                <label>Position</label>
+                <div class="position-grid">
+                  <button class="position-btn" data-position="topLeft">↖️</button>
+                  <button class="position-btn" data-position="top">⬆️</button>
+                  <button class="position-btn" data-position="topRight">↗️</button>
+                  <button class="position-btn" data-position="bottomLeft">↙️</button>
+                  <button class="position-btn active" data-position="bottom">⬇️</button>
+                  <button class="position-btn" data-position="bottomRight">↘️</button>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Font Style</label>
+                  <select id="pageNumberFont" class="select-input">
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Helvetica-Bold">Helvetica Bold</option>
+                    <option value="Helvetica-Oblique">Helvetica Italic</option>
+                    <option value="Helvetica-BoldOblique">Helvetica Bold Italic</option>
+                    <option value="Times-Roman">Times Roman</option>
+                    <option value="Times-Bold">Times Bold</option>
+                    <option value="Times-Italic">Times Italic</option>
+                    <option value="Times-BoldItalic">Times Bold Italic</option>
+                    <option value="Courier">Courier</option>
+                    <option value="Courier-Bold">Courier Bold</option>
+                    <option value="Courier-Oblique">Courier Italic</option>
+                    <option value="Courier-BoldOblique">Courier Bold Italic</option>
+                    <option value="Symbol">Symbol</option>
+                    <option value="ZapfDingbats">ZapfDingbats</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Font Size</label>
+                  <input type="number" id="pageNumberFontSize" class="number-input" value="12" min="6" max="72" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Color</label>
+                <input type="color" id="pageNumberColor" class="color-input" value="#000000" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Number Style</label>
+                  <select id="pageNumberStyle" class="select-input">
+                    <option value="decimal">1, 2, 3...</option>
+                    <option value="upperRoman">I, II, III...</option>
+                    <option value="lowerRoman">i, ii, iii...</option>
+                    <option value="upperAlpha">A, B, C...</option>
+                    <option value="lowerAlpha">a, b, c...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Format</label>
+                  <select id="pageNumberFormat" class="select-input">
+                    <option value="number">N</option>
+                    <option value="pageOfTotal">Page N of T</option>
+                    <option value="pageX">Page N</option>
+                    <option value="brackets">[N]</option>
+                    <option value="dashes">- N -</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Start From Number</label>
+                  <input type="number" id="pageNumberStart" class="number-input" value="1" min="1" />
+                </div>
+                <div class="form-group">
+                  <label>Margin (px)</label>
+                  <input type="number" id="pageNumberMargin" class="number-input" value="30" min="10" max="100" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Skip Pages - Hide Number Only (comma separated, e.g., 1,3,5)</label>
+                <input type="text" id="pageNumberSkip" class="text-input" placeholder="e.g., 1,2,5" />
+                <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px;">
+                  These pages won't show numbers but will be counted in the total
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label>Exclude Pages - Don't Count (comma separated, e.g., 1,2)</label>
+                <input type="text" id="pageNumberExclude" class="text-input" placeholder="e.g., 1,2" />
+                <small style="color: #6b7280; font-size: 12px; display: block; margin-top: 4px;">
+                  These pages won't show numbers and won't be counted (next page starts at 1)
+                </small>
+              </div>
+
+              <div class="preview-row">
+                <div class="preview-box">
+                  <div class="preview-label">Placement Preview</div>
+                  <div class="pageNumber-placement-preview">
+                    <div id="pageNumberPlacementIndicator" class="placement-indicator">1</div>
+                  </div>
+                </div>
+
+                <div class="preview-box">
+                  <div class="preview-label">Font Preview</div>
+                  <div class="pageNumber-font-preview">
+                    <span id="pageNumberFontPreview">Page 1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-bar">
+              <button id="pageNumbersBtn" class="btn-primary">
+                <span>🔢</span> Add Page Numbers
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="imageToPdf-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Images → PDF</h2>
+          <p class="tool-description">Combine multiple images into a single PDF</p>
+        </div>
+
+        <div class="imageToPdf-container">
+          <div class="imageToPdf-section">
+            <div class="imageToPdf-dropzone" id="imageToPdfDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">🖼️</div>
+                <div class="dropzone-text">
+                  <strong>Drop image files here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectImagesBtn" class="btn-secondary">Browse Images</button>
+              </div>
+            </div>
+            <input type="file" id="imageToPdfFileInput" accept="image/png,image/jpeg,image/jpg" multiple style="display: none;" />
+          </div>
+
+          <div id="imageList" class="image-list" style="display: none;"></div>
+        </div>
+
+        <div id="imageToPdfOptions" class="options-container" style="display: none;">
+          <div class="option-card">
+            <h3>PDF Options</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Page Size</label>
+                <select id="pdfPageSize" class="select-input">
+                  <option value="fit">Fit to Image</option>
+                  <option value="a4">A4 (210 × 297 mm)</option>
+                  <option value="letter">Letter (8.5 × 11 in)</option>
+                  <option value="legal">Legal (8.5 × 14 in)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Orientation</label>
+                <select id="pdfOrientation" class="select-input">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Margin (pt)</label>
+                <input type="number" id="pdfMargin" class="number-input" value="0" min="0" max="100" />
+              </div>
+              <div class="form-group">
+                <label>Image Quality</label>
+                <select id="pdfImageQuality" class="select-input">
+                  <option value="original">Original</option>
+                  <option value="compressed">Compressed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button id="createPdfBtn" class="btn-primary">
+              <span>📄</span> Create PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pdfToImage-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>PDF → Images</h2>
+          <p class="tool-description">Convert PDF pages to image files</p>
+        </div>
+
+        <div class="pdfToImage-container">
+          <div class="pdfToImage-section">
+            <div class="pdfToImage-dropzone" id="pdfToImageDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">📸</div>
+                <div class="dropzone-text">
+                  <strong>Drop PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectPdfToImageBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="pdfToImageFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="pdfToImagePdfInfo" class="pdf-info-card"></div>
+          </div>
+        </div>
+
+        <div id="pdfToImageOptions" class="options-container" style="display: none;">
+          <div class="option-card">
+            <h3>Conversion Options</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Image Format</label>
+                <select id="imageFormat" class="select-input">
+                  <option value="png">PNG (Lossless)</option>
+                  <option value="jpeg">JPEG (Compressed)</option>
+                </select>
+              </div>
+              <div class="form-group" id="qualityGroup" style="display: none;">
+                <label>JPEG Quality</label>
+                <input type="number" id="imageQuality" class="number-input" value="90" min="1" max="100" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>DPI (Resolution)</label>
+                <select id="imageDpi" class="select-input">
+                  <option value="72">72 DPI (Web)</option>
+                  <option value="96">96 DPI (Screen)</option>
+                  <option value="150" selected>150 DPI (Standard)</option>
+                  <option value="200">200 DPI (Good)</option>
+                  <option value="300">300 DPI (High Quality)</option>
+                  <option value="450">450 DPI (Very High)</option>
+                  <option value="600">600 DPI (Print)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Page Range</label>
+                <input type="text" id="imagePageRange" class="text-input" placeholder="all or 1-5, 7, 10-12" value="all" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Color Mode</label>
+                <select id="imageColorMode" class="select-input">
+                  <option value="color">Full Color (RGB)</option>
+                  <option value="grayscale">Grayscale</option>
+                  <option value="monochrome">Monochrome (B&W)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>File Naming</label>
+                <select id="imageNaming" class="select-input">
+                  <option value="default">filename-1, filename-2...</option>
+                  <option value="page">filename-page-1, filename-page-2...</option>
+                  <option value="padded">filename-001, filename-002...</option>
+                  <option value="custom">Custom prefix</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" id="customPrefixGroup" style="display: none;">
+              <label>Custom Prefix</label>
+              <input type="text" id="imageCustomPrefix" class="text-input" placeholder="Enter custom prefix" value="page" />
+            </div>
+
+            <div class="form-group">
+              <label>Output Folder</label>
+              <div class="folder-selector">
+                <button id="selectOutputFolderBtn" class="btn-secondary">📁 Select Folder</button>
+                <span id="selectedFolderName" class="folder-name">No folder selected</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button id="convertToImagesBtn" class="btn-primary">
+              <span>🖼️</span> Convert to Images
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="protect-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Protect PDF</h2>
+          <p class="tool-description">Add password protection to your PDF</p>
+        </div>
+
+        <div class="protect-container">
+          <div class="protect-section">
+            <div class="protect-dropzone" id="protectDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">🔒</div>
+                <div class="dropzone-text">
+                  <strong>Drop PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectProtectPdfBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="protectFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="protectPdfInfo" class="pdf-info-card"></div>
+          </div>
+        </div>
+
+        <div id="protectOptions" class="options-container" style="display: none;">
+          <div class="option-card">
+            <h3>Password Settings</h3>
+
+            <div class="form-group">
+              <label>User Password (Required)</label>
+              <input type="password" id="protectUserPassword" class="text-input" placeholder="Enter password to open PDF" />
+            </div>
+
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input type="password" id="protectConfirmPassword" class="text-input" placeholder="Re-enter password" />
+            </div>
+
+            <div class="form-group">
+              <label>Owner Password (Optional)</label>
+              <input type="password" id="protectOwnerPassword" class="text-input" placeholder="Password for permissions (optional)" />
+            </div>
+
+            <div class="form-group">
+              <label>Permissions</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="allowPrinting" checked />
+                  <span>Allow Printing</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="allowModification" />
+                  <span>Allow Modification</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="allowCopying" />
+                  <span>Allow Copying Text</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button id="protectPdfBtn" class="btn-primary">
+              <span>🔒</span> Protect PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="unlock-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Unlock PDF</h2>
+          <p class="tool-description">Remove password protection from your PDF</p>
+        </div>
+
+        <div class="unlock-container">
+          <div class="unlock-section">
+            <div class="unlock-dropzone" id="unlockDropzone">
+              <div class="dropzone-content">
+                <div class="dropzone-icon">🔓</div>
+                <div class="dropzone-text">
+                  <strong>Drop protected PDF file here</strong>
+                  <span>or</span>
+                </div>
+                <button id="selectUnlockPdfBtn" class="btn-secondary">Browse Files</button>
+              </div>
+            </div>
+            <input type="file" id="unlockFileInput" accept=".pdf" style="display: none;" />
+
+            <div id="unlockPdfInfo" class="pdf-info-card"></div>
+          </div>
+        </div>
+
+        <div id="unlockOptions" class="options-container" style="display: none;">
+          <div class="option-card">
+            <h3>Enter Password</h3>
+
+            <div class="form-group">
+              <label>PDF Password</label>
+              <input type="password" id="unlockPassword" class="text-input" placeholder="Enter PDF password" />
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button id="unlockPdfBtn" class="btn-primary">
+              <span>🔓</span> Unlock PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="compress-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Compress PDF</h2>
+          <p class="tool-description">Reduce PDF file size by optimizing images and removing unnecessary data</p>
+        </div>
+
+        <div class="split-dropzone" id="compressDropzone">
+          <div class="dropzone-content">
+            <div class="dropzone-icon">🗜️</div>
+            <div class="dropzone-text">
+              <strong>Drop PDF file here</strong>
+              <span>or</span>
+            </div>
+            <button id="selectCompressPdfBtn" class="btn-secondary">Browse Files</button>
+          </div>
+        </div>
+        <input type="file" id="compressFileInput" accept=".pdf" style="display: none;" />
+
+        <div id="compressPdfInfo" class="pdf-info-card"></div>
+
+        <div class="options-section" id="compressOptions" style="display: none;">
+          <h3>Compression Settings</h3>
+          
+          <div class="form-group">
+            <label for="compressionLevel">Compression Level</label>
+            <select id="compressionLevel" class="select-input">
+              <option value="low">Low (Better Quality, Larger Size)</option>
+              <option value="medium" selected>Medium (Balanced)</option>
+              <option value="high">High (Smaller Size, Lower Quality)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="compressImageQuality" class="range-label">
+              <span>Image Quality (%)</span>
+              <span id="compressImageQualityValue">60%</span>
+            </label>
+            <input type="range" id="compressImageQuality" min="10" max="100" value="60" class="slider">
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="removeMetadata" checked>
+              <span>Remove metadata</span>
+            </label>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" id="compressImages" checked>
+              <span>Compress images</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="action-bar" id="compressActionBar" style="display: none;">
+          <button id="compressPdfBtn" class="btn-primary">
+            <span>🗜️</span> Compress PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Edit Metadata Tool -->
+      <div id="editMetadata-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Edit PDF Metadata</h2>
+          <p class="tool-description">View and modify PDF document information</p>
+        </div>
+
+        <div class="split-dropzone" id="metadataDropzone">
+          <div class="dropzone-content">
+            <div class="dropzone-icon">📝</div>
+            <div class="dropzone-text">
+              <strong>Drop PDF file here</strong>
+              <span>or</span>
+            </div>
+            <button id="selectMetadataPdfBtn" class="btn-secondary">Browse Files</button>
+          </div>
+        </div>
+        <input type="file" id="metadataFileInput" accept=".pdf" style="display: none;" />
+
+        <div id="metadataPdfInfo" class="pdf-info-card"></div>
+
+        <div class="options-section" id="metadataForm" style="display: none;">
+          <h3>Document Information</h3>
+
+          <div class="form-group">
+            <label for="metaTitle">Title</label>
+            <input type="text" id="metaTitle" class="text-input" placeholder="Document title">
+          </div>
+
+          <div class="form-group">
+            <label for="metaAuthor">Author</label>
+            <input type="text" id="metaAuthor" class="text-input" placeholder="Author name">
+          </div>
+
+          <div class="form-group">
+            <label for="metaSubject">Subject</label>
+            <input type="text" id="metaSubject" class="text-input" placeholder="Document subject">
+          </div>
+
+          <div class="form-group">
+            <label for="metaKeywords">Keywords</label>
+            <input type="text" id="metaKeywords" class="text-input" placeholder="Comma-separated keywords">
+          </div>
+
+          <div class="form-group">
+            <label for="metaCreator">Creator</label>
+            <input type="text" id="metaCreator" class="text-input" placeholder="Creating application">
+          </div>
+
+          <div class="form-group">
+            <label for="metaProducer">Producer</label>
+            <input type="text" id="metaProducer" class="text-input" placeholder="PDF producer">
+          </div>
+
+          <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <div id="metaCreationDate" style="color: #6b7280; font-size: 14px; margin-bottom: 8px;"></div>
+            <div id="metaModDate" style="color: #6b7280; font-size: 14px;"></div>
+          </div>
+        </div>
+
+        <div class="action-bar" id="metadataActionBar" style="display: none;">
+          <button id="saveMetadataBtn" class="btn-primary">
+            <span>💾</span> Save Metadata
+          </button>
+        </div>
+      </div>
+
+      <!-- Convert Tool -->
+      <div id="convert-tool" class="tool-panel">
+        <div class="tool-header">
+          <h2>Convert Files</h2>
+          <p class="tool-description">Convert between PDF, Word, Excel, PowerPoint, and HTML formats</p>
+        </div>
+
+        <div class="options-section">
+          <h3>Conversion Type</h3>
+          
+          <div class="form-group">
+            <label for="conversionType">Select Conversion</label>
+            <select id="conversionType" class="select-input">
+              <option value="">-- Choose conversion type --</option>
+              <optgroup label="PDF Conversions">
+                <option value="pdf-to-word">PDF → Word (.docx)</option>
+                <option value="pdf-to-excel">PDF → Excel (.xlsx)</option>
+                <option value="pdf-to-ppt">PDF → PowerPoint (.pptx)</option>
+                <option value="pdf-to-html">PDF → HTML</option>
+              </optgroup>
+              <optgroup label="To PDF Conversions">
+                <option value="word-to-pdf">Word → PDF</option>
+                <option value="excel-to-pdf">Excel → PDF</option>
+                <option value="ppt-to-pdf">PowerPoint → PDF</option>
+                <option value="html-to-pdf">HTML → PDF</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="split-dropzone" id="convertDropzone">
+          <div class="dropzone-content">
+            <div class="dropzone-icon">🔄</div>
+            <div class="dropzone-text">
+              <strong>Drop file here</strong>
+              <span>or</span>
+            </div>
+            <button id="selectConvertFileBtn" class="btn-secondary">Browse Files</button>
+          </div>
+        </div>
+        <input type="file" id="convertFileInput" style="display: none;" />
+
+        <div id="convertFileInfo" class="pdf-info-card"></div>
+
+        <div class="action-bar" id="convertActionBar" style="display: none;">
+          <button id="convertBtn" class="btn-primary">
+            <span>🔄</span> Convert File
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="ui.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('pdfAPI', {
+  merge: (files, outPath) => ipcRenderer.invoke('merge', files, outPath),
+    showSaveDialog: (options) => ipcRenderer.invoke('showSaveDialog', options),
+  openFile: () => ipcRenderer.invoke('openFile'),
+  selectFolder: () => ipcRenderer.invoke('selectFolder'),
+  selectImage: () => ipcRenderer.invoke('selectImage'),
+  split: (inputPath, ranges, outputDir) => ipcRenderer.invoke('split', inputPath, ranges, outputDir),
+  getPDFPageCount: (filePath) => ipcRenderer.invoke('getPDFPageCount', filePath),
+  organize: (inputPath, operations, outputPath) => ipcRenderer.invoke('organize', inputPath, operations, outputPath),
+  getPDFThumbnails: (filePath) => ipcRenderer.invoke('getPDFThumbnails', filePath),
+  watermark: (inputPath, options, outputPath) => ipcRenderer.invoke('watermark', inputPath, options, outputPath),
+  pageNumbers: (inputPath, options, outputPath) => ipcRenderer.invoke('pageNumbers', inputPath, options, outputPath),
+  pdfToImages: (inputPath, options) => ipcRenderer.invoke('pdfToImages', inputPath, options),
+  imagesToPdf: (imagePaths, options, outputPath) => ipcRenderer.invoke('imagesToPdf', imagePaths, options, outputPath),
+  selectImages: () => ipcRenderer.invoke('selectImages'),
+  protectPdf: (inputPath, options, outputPath) => ipcRenderer.invoke('protectPdf', inputPath, options, outputPath),
+  unlockPdf: (inputPath, password, outputPath) => ipcRenderer.invoke('unlockPdf', inputPath, password, outputPath),
+  compressPdf: (inputPath, options, outputPath) => ipcRenderer.invoke('compressPdf', inputPath, options, outputPath),
+  readMetadata: (inputPath) => ipcRenderer.invoke('readMetadata', inputPath),
+  updateMetadata: (inputPath, metadata, outputPath) => ipcRenderer.invoke('updateMetadata', inputPath, metadata, outputPath),
+  convert: (conversionType, inputPath, outputPath) => ipcRenderer.invoke('convert', conversionType, inputPath, outputPath),
+  getFileSize: (filePath) => ipcRenderer.invoke('getFileSize', filePath),
+});

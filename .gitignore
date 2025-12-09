@@ -1,0 +1,54 @@
+# Node modules
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+*.spec
+
+# PyInstaller
+python_converter/build/
+python_converter/dist/
+python_converter/*.spec
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Package files
+*.exe
+*.app
+*.dmg
+*.pkg
+
+# Keep executables folder but ignore specific large files
+executables/converter_old.exe
