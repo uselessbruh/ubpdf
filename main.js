@@ -38,7 +38,7 @@ ipcMain.handle('showSaveDialog', async (_, options = {}) => {
     defaultPath: 'merged.pdf',
     filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
   };
-  
+
   const dialogOptions = { ...defaultOptions, ...options };
   const result = await dialog.showSaveDialog(mainWindow, dialogOptions);
 

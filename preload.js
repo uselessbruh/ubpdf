@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('pdfAPI', {
   merge: (files, outPath) => ipcRenderer.invoke('merge', files, outPath),
-    showSaveDialog: (options) => ipcRenderer.invoke('showSaveDialog', options),
+  showSaveDialog: (options) => ipcRenderer.invoke('showSaveDialog', options),
   openFile: () => ipcRenderer.invoke('openFile'),
   selectFolder: () => ipcRenderer.invoke('selectFolder'),
   selectImage: () => ipcRenderer.invoke('selectImage'),
