@@ -50,5 +50,9 @@ desktop.ini
 *.dmg
 *.pkg
 
+# Build output
+release/
+dist/
+
 # Keep executables folder but ignore specific large files
 executables/converter_old.exe
