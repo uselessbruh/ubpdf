@@ -4,9 +4,9 @@ function showToast(message, type = 'info') {
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
   document.body.appendChild(toast);
-  
+
   setTimeout(() => toast.classList.add('show'), 10);
-  
+
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 300);
@@ -61,11 +61,11 @@ mergeDropzone.addEventListener('dragleave', () => {
 mergeDropzone.addEventListener('drop', (e) => {
   e.preventDefault();
   mergeDropzone.classList.remove('drag-over');
-  
+
   const droppedFiles = [...e.dataTransfer.files]
     .filter(f => f.type === 'application/pdf')
     .map(f => ({ path: f.path, name: f.name }));
-  
+
   if (droppedFiles.length > 0) {
     files = [...files, ...droppedFiles];
     renderFileList();
@@ -967,7 +967,7 @@ function updateWatermarkPreview() {
     previewText.style.fontSize = `${Math.min(fontSize / 1.45, 100)}px`;
     previewText.style.opacity = opacity;
     previewText.style.color = color;
-    
+
     // Set font family based on selection
     if (font.includes('Times')) {
       previewText.style.fontFamily = 'Times New Roman, serif';
@@ -978,7 +978,7 @@ function updateWatermarkPreview() {
     } else {
       previewText.style.fontFamily = 'Arial, Helvetica, sans-serif';
     }
-    
+
     // Set font weight and style
     previewText.style.fontWeight = font.includes('Bold') ? 'bold' : 'normal';
     previewText.style.fontStyle = (font.includes('Italic') || font.includes('Oblique')) ? 'italic' : 'normal';
@@ -1220,7 +1220,7 @@ function updatePageNumberPreviews() {
   const format = pageNumberFormat.value;
   const font = pageNumberFont.value;
   const margin = 8; // percentage margin for preview
-  
+
   // Convert number style for preview
   function getStyledNumber(num, style) {
     switch (style) {
@@ -1231,9 +1231,9 @@ function updatePageNumberPreviews() {
       default: return '1';
     }
   }
-  
+
   const styledNum = getStyledNumber(1, style);
-  
+
   // Update font preview text based on format
   let previewText;
   switch (format) {
@@ -1252,12 +1252,12 @@ function updatePageNumberPreviews() {
     default:
       previewText = styledNum;
   }
-  
+
   // Update font preview
   pageNumberFontPreview.textContent = previewText;
   pageNumberFontPreview.style.fontSize = `${Math.min(fontSize * 1.5, 32)}px`;
   pageNumberFontPreview.style.color = color;
-  
+
   // Set font family based on selection
   if (font.includes('Times')) {
     pageNumberFontPreview.style.fontFamily = 'Times New Roman, serif';
@@ -1268,23 +1268,23 @@ function updatePageNumberPreviews() {
   } else {
     pageNumberFontPreview.style.fontFamily = 'Arial, Helvetica, sans-serif';
   }
-  
+
   // Set font weight and style
   pageNumberFontPreview.style.fontWeight = font.includes('Bold') ? 'bold' : 'normal';
   pageNumberFontPreview.style.fontStyle = (font.includes('Italic') || font.includes('Oblique')) ? 'italic' : 'normal';
-  
+
   // Update placement indicator
   pageNumberPlacementIndicator.textContent = styledNum;
   pageNumberPlacementIndicator.style.fontSize = `${Math.min(fontSize * 0.8, 14)}px`;
   pageNumberPlacementIndicator.style.color = color;
-  
+
   // Position based on selected position
   pageNumberPlacementIndicator.style.left = '';
   pageNumberPlacementIndicator.style.right = '';
   pageNumberPlacementIndicator.style.top = '';
   pageNumberPlacementIndicator.style.bottom = '';
   pageNumberPlacementIndicator.style.transform = '';
-  
+
   switch (selectedPageNumberPosition) {
     case 'top':
       pageNumberPlacementIndicator.style.top = `${margin}%`;
@@ -1387,10 +1387,10 @@ document.querySelectorAll('#pageNumbersOptions .position-btn').forEach((btn) => 
 function updateFormatOptions() {
   const style = pageNumberStyle.value;
   const isNonDecimal = style !== 'decimal';
-  
+
   // Get the pageOfTotal option
   const pageOfTotalOption = pageNumberFormat.querySelector('option[value="pageOfTotal"]');
-  
+
   if (isNonDecimal) {
     // Hide "Page N of T" for Roman and alphabetical styles
     if (pageOfTotalOption) {
@@ -1442,13 +1442,13 @@ pageNumbersBtn.onclick = async () => {
 
     // Parse skip pages (hide number but count)
     const skipPagesInput = pageNumberSkip.value.trim();
-    const skipPages = skipPagesInput 
+    const skipPages = skipPagesInput
       ? skipPagesInput.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0)
       : [];
 
     // Parse exclude pages (don't show number and don't count)
     const excludePagesInput = pageNumberExclude.value.trim();
-    const excludePages = excludePagesInput 
+    const excludePages = excludePagesInput
       ? excludePagesInput.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p) && p > 0)
       : [];
 
@@ -1665,10 +1665,10 @@ imageToPdfDropzone.addEventListener('drop', async (e) => {
   e.preventDefault();
   imageToPdfDropzone.classList.remove('drag-over');
 
-  const files = [...e.dataTransfer.files].filter(file => 
+  const files = [...e.dataTransfer.files].filter(file =>
     file.type === 'image/png' || file.type === 'image/jpeg'
   );
-  
+
   if (files.length > 0) {
     const paths = files.map(f => f.path);
     addImagesToList(paths);
@@ -1712,7 +1712,7 @@ function renderImageList() {
     item.dataset.index = index;
 
     const fileName = imagePath.split('\\\\').pop();
-    
+
     item.innerHTML = `
       <span class="drag-handle">⋮⋮</span>
       <span class="image-name">🖼️ ${fileName}</span>
@@ -1774,7 +1774,7 @@ function renderImageList() {
       e.preventDefault();
       const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
       const toIndex = parseInt(item.dataset.index);
-      
+
       if (fromIndex !== toIndex) {
         const [movedItem] = selectedImages.splice(fromIndex, 1);
         selectedImages.splice(toIndex, 0, movedItem);
@@ -2339,7 +2339,7 @@ saveMetadataBtn.addEventListener('click', async () => {
     metadataForm.style.display = 'none';
     metadataActionBar.style.display = 'none';
     metadataFileInput.value = '';
-    
+
     // Clear form
     metaTitle.value = '';
     metaAuthor.value = '';
@@ -2390,7 +2390,7 @@ conversionType.addEventListener('change', () => {
   } else {
     convertFileInput.removeAttribute('accept');
   }
-  
+
   // Clear selected file when conversion type changes
   if (selectedConvertFile) {
     selectedConvertFile = null;
@@ -2488,7 +2488,7 @@ convertBtn.addEventListener('click', async () => {
     const outputExt = FILE_EXTENSIONS[conversionType.value].output;
     const extName = outputExt.substring(1).toUpperCase();
     const inputFileName = selectedConvertFile.split(/[\\\/]/).pop().replace(/\.[^.]+$/, '');
-    
+
     const saveOptions = {
       title: `Save Converted ${extName} File`,
       defaultPath: `${inputFileName}${outputExt}`,
