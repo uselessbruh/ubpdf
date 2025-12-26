@@ -5,8 +5,17 @@ const fs = require('fs');
 
 const execFileAsync = promisify(execFile);
 
-// Path to converter executable
-const CONVERTER_PATH = path.join(__dirname, '..', 'executables', 'converter.exe');
+// Path to converter executable - works in both dev and packaged app
+const getResourcePath = (relativePath) => {
+  if (process.resourcesPath) {
+    // Packaged app
+    return path.join(process.resourcesPath, relativePath);
+  }
+  // Development
+  return path.join(__dirname, '..', relativePath);
+};
+
+const CONVERTER_PATH = getResourcePath('executables/converter.exe');
 
 /**
  * Convert files between different formats

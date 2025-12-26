@@ -20,7 +20,14 @@ module.exports = async (inputPath, password, outputPath) => {
     // Try with pdftk first (most reliable)
     try {
       // Use local pdftk from project directory
-      const pdftkPath = path.join(__dirname, '..', 'executables', 'bin', 'pdftk.exe');
+      const getResourcePath = (relativePath) => {
+        if (process.resourcesPath) {
+          return path.join(process.resourcesPath, relativePath);
+        }
+        return path.join(__dirname, '..', relativePath);
+      };
+      
+      const pdftkPath = getResourcePath('executables/bin/pdftk.exe');
       
       // pdftk command: pdftk input.pdf input_pw <password> output output.pdf
       const command = `"${pdftkPath}" "${inputPath}" input_pw "${password}" output "${outputPath}"`;

@@ -17,8 +17,16 @@
     "files": [
       "**/*",
       "!python_converter/**/*",
-      "python_converter/requirements_lite.txt",
-      "!release/**/*"
+      "!release/**/*",
+      "!.git",
+      "!.gitignore"
+    ],
+    "extraResources": [
+      {
+        "from": "executables",
+        "to": "executables",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": [

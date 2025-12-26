@@ -30,7 +30,14 @@ module.exports = async (inputPath, options, outputPath) => {
   }
 
   // Use local pdftk from project directory
-  const pdftkPath = path.join(__dirname, '..', 'executables', 'bin', 'pdftk.exe');
+  const getResourcePath = (relativePath) => {
+    if (process.resourcesPath) {
+      return path.join(process.resourcesPath, relativePath);
+    }
+    return path.join(__dirname, '..', relativePath);
+  };
+  
+  const pdftkPath = getResourcePath('executables/bin/pdftk.exe');
 
   try {
     // Use pdftk for encryption (most reliable cross-platform solution)

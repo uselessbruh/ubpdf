@@ -5,8 +5,17 @@ const path = require('path');
 
 const execFileAsync = promisify(execFile);
 
-// Path to Ghostscript in project directory
-const GHOSTSCRIPT_PATH = path.join(__dirname, '..', 'executables', 'gswin64c.exe');
+// Path to Ghostscript - works in both dev and packaged app
+const getResourcePath = (relativePath) => {
+  if (process.resourcesPath) {
+    // Packaged app
+    return path.join(process.resourcesPath, relativePath);
+  }
+  // Development
+  return path.join(__dirname, '..', relativePath);
+};
+
+const GHOSTSCRIPT_PATH = getResourcePath('executables/gswin64c.exe');
 
 /**
  * Compress a PDF using Ghostscript for real image compression
