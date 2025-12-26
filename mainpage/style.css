@@ -473,15 +473,22 @@ body {
 .download-footer p {
     font-size: 15px;
     color: var(--text-secondary);
+    margin-bottom: 12px;
 }
 
-.link-github {
+.contact-info {
+    margin-top: 16px;
+}
+
+.link-github,
+.link-email {
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 600;
 }
 
-.link-github:hover {
+.link-github:hover,
+.link-email:hover {
     text-decoration: underline;
 }
 
