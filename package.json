@@ -30,7 +30,9 @@
       {
         "from": "executables",
         "to": "executables",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
