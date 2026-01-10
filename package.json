@@ -6,7 +6,12 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "build:win32": "electron-builder --win --ia32",
+    "build:win64": "electron-builder --win --x64",
+    "build:win": "electron-builder --win --ia32 --x64",
+    "build:linux": "electron-builder --linux AppImage deb",
+    "build:all": "electron-builder --win --linux"
   },
   "build": {
     "appId": "com.ubpdf.app",
@@ -33,7 +38,8 @@
         {
           "target": "nsis",
           "arch": [
-            "x64"
+            "x64",
+            "ia32"
           ]
         }
       ],
@@ -46,6 +52,23 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "UB PDF"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office",
+      "icon": "assets/logo.png",
+      "maintainer": "UB PDF Team",
+      "synopsis": "All-in-One PDF Toolkit",
+      "description": "Powerful PDF toolkit for converting, merging, splitting, compressing and editing PDF files",
+      "desktop": {
+        "Name": "UB PDF",
+        "Comment": "All-in-One PDF Toolkit",
+        "Categories": "Office;Utility;",
+        "MimeType": "application/pdf"
+      }
     }
   },
   "dependencies": {

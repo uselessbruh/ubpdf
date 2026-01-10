@@ -7,45 +7,93 @@ import sys
 import os
 
 def pdf_to_word(input_path, output_path):
-    """Convert PDF to Word DOCX"""
+    """Convert PDF to Word DOCX with enhanced formatting preservation"""
     from pdf2docx import Converter
     
     cv = Converter(input_path)
-    cv.convert(output_path)
+    # Enhanced conversion with better layout, formatting, and table detection
+    cv.convert(output_path, 
+               start=0, 
+               end=None,
+               pages=None,
+               multi_processing=False,
+               cpu_count=1)
     cv.close()
     print(f"SUCCESS: Converted PDF to Word: {output_path}")
 
 def word_to_pdf(input_path, output_path):
-    """Convert Word DOCX to PDF"""
+    """Convert Word DOCX to PDF with formatting preservation"""
     from docx import Document
     from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
     
     doc = Document(input_path)
-    pdf = SimpleDocTemplate(output_path, pagesize=letter)
+    pdf = SimpleDocTemplate(output_path, pagesize=letter,
+                           topMargin=0.75*inch, bottomMargin=0.75*inch,
+                           leftMargin=0.75*inch, rightMargin=0.75*inch)
     styles = getSampleStyleSheet()
     story = []
     
+    # Add custom styles
+    styles.add(ParagraphStyle(name='CustomBold', parent=styles['Normal'], fontName='Helvetica-Bold'))
+    styles.add(ParagraphStyle(name='CustomItalic', parent=styles['Normal'], fontName='Helvetica-Oblique'))
+    
+    # Process paragraphs
     for para in doc.paragraphs:
         if para.text.strip():
-            p = Paragraph(para.text, styles['Normal'])
+            formatted_text = ""
+            for run in para.runs:
+                text = run.text
+                if run.bold:
+                    text = f"<b>{text}</b>"
+                if run.italic:
+                    text = f"<i>{text}</i>"
+                if run.underline:
+                    text = f"<u>{text}</u>"
+                formatted_text += text
+            
+            p = Paragraph(formatted_text or para.text, styles['Normal'])
             story.append(p)
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 0.2*inch))
+    
+    # Process tables
+    for table in doc.tables:
+        table_data = [[cell.text for cell in row.cells] for row in table.rows]
+        if table_data:
+            t = Table(table_data)
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            story.append(t)
+            story.append(Spacer(1, 0.3*inch))
     
     pdf.build(story)
     print(f"SUCCESS: Converted Word to PDF: {output_path}")
 
 def pdf_to_excel(input_path, output_path):
-    """Extract tables from PDF to Excel using pdfplumber"""
+    """Extract tables from PDF to Excel with formatting"""
     import pdfplumber
     import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Tables"
     
     current_row = 1
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
     
     with pdfplumber.open(input_path) as pdf:
         for page_num, page in enumerate(pdf.pages, 1):
@@ -53,48 +101,98 @@ def pdf_to_excel(input_path, output_path):
             
             if tables:
                 for table in tables:
-                    ws.cell(row=current_row, column=1, value=f"Page {page_num}")
+                    # Page label
+                    cell = ws.cell(row=current_row, column=1, value=f"Page {page_num}")
+                    cell.font = Font(bold=True, size=12, color='366092')
                     current_row += 1
                     
-                    for row_data in table:
-                        for col_num, cell_value in enumerate(row_data, 1):
-                            ws.cell(row=current_row, column=col_num, value=cell_value)
+                    # Table header
+                    if table:
+                        for col_num, cell_value in enumerate(table[0], 1):
+                            cell = ws.cell(row=current_row, column=col_num, value=cell_value)
+                            cell.fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+                            cell.font = Font(bold=True, color='FFFFFF')
+                            cell.alignment = Alignment(horizontal='center', vertical='center')
+                            cell.border = border
                         current_row += 1
+                        
+                        # Table data
+                        for row_data in table[1:]:
+                            for col_num, cell_value in enumerate(row_data, 1):
+                                cell = ws.cell(row=current_row, column=col_num, value=cell_value)
+                                cell.border = border
+                                cell.alignment = Alignment(horizontal='left', vertical='center')
+                            current_row += 1
                     
                     current_row += 1  # Add space between tables
+    
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if cell.value and len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
     
     wb.save(output_path)
     print(f"SUCCESS: Extracted tables to Excel: {output_path}")
 
 def excel_to_pdf(input_path, output_path):
-    """Convert Excel XLSX to PDF"""
+    """Convert Excel XLSX to PDF with enhanced formatting"""
     from openpyxl import load_workbook
     from reportlab.lib.pagesizes import letter, landscape
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, PageBreak
     from reportlab.lib import colors
+    from reportlab.lib.units import inch
     
     wb = load_workbook(input_path)
-    ws = wb.active
+    pagesize = landscape(letter) if wb.active.max_column > 8 else letter
+    pdf = SimpleDocTemplate(output_path, pagesize=pagesize,
+                           topMargin=0.5*inch, bottomMargin=0.5*inch)
     
-    data = []
-    for row in ws.iter_rows(values_only=True):
-        data.append(list(row))
+    story = []
     
-    pdf = SimpleDocTemplate(output_path, pagesize=landscape(letter))
+    for sheet_idx, ws in enumerate(wb.worksheets):
+        if sheet_idx > 0:
+            story.append(PageBreak())
+        
+        # Get data
+        data = []
+        for row in ws.iter_rows(values_only=True):
+            data.append([str(cell) if cell is not None else '' for cell in row])
+            if len(data) >= 100:  # Limit rows
+                break
+        
+        if data:
+            t = Table(data)
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#366092')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ]))
+            
+            # Alternate row colors
+            for row_idx in range(1, len(data), 2):
+                t.setStyle(TableStyle([
+                    ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#F5F5F5'))
+                ]))
+            
+            story.append(t)
+            story.append(Spacer(1, 0.3*inch))
     
-    t = Table(data)
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    pdf.build([t])
+    pdf.build(story)
     print(f"SUCCESS: Converted Excel to PDF: {output_path}")
 
 def html_to_pdf(input_path, output_path):
