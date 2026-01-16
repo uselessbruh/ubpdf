@@ -20,6 +20,9 @@ python_converter/build/
 python_converter/dist/
 python_converter/*.spec
 
+# Bundled executables (Ghostscript, pdftk, Python converters)
+executables/
+
 # Logs
 *.log
 npm-debug.log*
@@ -48,6 +51,12 @@ desktop.ini
 *.exe
 *.app
 *.dmg
+
+# Release builds
+release/
+*.zip
+*.blockmap
+*.yml
 *.pkg
 
 # Build output

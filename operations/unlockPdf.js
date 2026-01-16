@@ -3,6 +3,7 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
+const { handlePdfError } = require('./errorHandler');
 const execAsync = promisify(exec);
 
 /**
@@ -13,7 +14,12 @@ const execAsync = promisify(exec);
  */
 module.exports = async (inputPath, password, outputPath) => {
   if (!password) {
-    throw new Error('Password is required');
+    throw new Error('Password is required to unlock the PDF');
+  }
+
+  // Validate input file
+  if (!fs.existsSync(inputPath)) {
+    throw new Error(`Input file not found: ${path.basename(inputPath)}`);
   }
 
   try {
@@ -21,13 +27,21 @@ module.exports = async (inputPath, password, outputPath) => {
     try {
       // Use local pdftk from project directory
       const getResourcePath = (relativePath) => {
-        if (process.resourcesPath) {
+        // In packaged app, use process.resourcesPath
+        // In development, use the project root directory
+        if (process.env.NODE_ENV === 'production' && process.resourcesPath) {
           return path.join(process.resourcesPath, relativePath);
         }
+        // Development mode - go up from operations folder to project root
         return path.join(__dirname, '..', relativePath);
       };
       
       const pdftkPath = getResourcePath('executables/bin/pdftk.exe');
+      
+      // Check if pdftk exists
+      if (!fs.existsSync(pdftkPath)) {
+        throw new Error('PDFtk not available');
+      }
       
       // pdftk command: pdftk input.pdf input_pw <password> output output.pdf
       const command = `"${pdftkPath}" "${inputPath}" input_pw "${password}" output "${outputPath}"`;
@@ -56,9 +70,9 @@ module.exports = async (inputPath, password, outputPath) => {
     if (error.message.includes('password') || error.message.includes('Incorrect')) {
       throw new Error('Incorrect password or PDF is not encrypted');
     }
-    if (error.message.includes('pdftk')) {
-      throw new Error('Password removal requires PDFtk. Please install PDFtk from: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/');
+    if (error.message.includes('PDFtk not available')) {
+      throw new Error('Password removal failed: PDFtk not found. The PDF may not be encrypted or requires a different tool.');
     }
-    throw new Error(`Failed to unlock PDF: ${error.message}`);
+    throw handlePdfError(error, inputPath, outputPath, 'Unlock PDF');
   }
 };

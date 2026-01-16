@@ -1,5 +1,7 @@
 const { PDFDocument } = require('pdf-lib');
 const fs = require('fs');
+const path = require('path');
+const { handlePdfError } = require('./errorHandler');
 
 /**
  * Read metadata from a PDF file
@@ -8,8 +10,15 @@ const fs = require('fs');
  */
 async function readMetadata(inputPath) {
   try {
+    if (!fs.existsSync(inputPath)) {
+      throw new Error(`Input file not found: ${path.basename(inputPath)}`);
+    }
+
     const existingPdfBytes = fs.readFileSync(inputPath);
-    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const pdfDoc = await PDFDocument.load(existingPdfBytes, { 
+      ignoreEncryption: true,
+      updateMetadata: false 
+    });
 
     return {
       title: pdfDoc.getTitle() || '',
@@ -22,7 +31,7 @@ async function readMetadata(inputPath) {
       modificationDate: pdfDoc.getModificationDate()
     };
   } catch (error) {
-    throw new Error(`Failed to read PDF metadata: ${error.message}`);
+    throw handlePdfError(error, inputPath, '', 'Read PDF metadata');
   }
 }
 
@@ -34,8 +43,15 @@ async function readMetadata(inputPath) {
  */
 async function updateMetadata(inputPath, metadata, outputPath) {
   try {
+    if (!fs.existsSync(inputPath)) {
+      throw new Error(`Input file not found: ${path.basename(inputPath)}`);
+    }
+
     const existingPdfBytes = fs.readFileSync(inputPath);
-    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const pdfDoc = await PDFDocument.load(existingPdfBytes, { 
+      ignoreEncryption: true,
+      updateMetadata: false 
+    });
 
     // Update metadata fields
     if (metadata.title !== undefined) {
@@ -66,8 +82,8 @@ async function updateMetadata(inputPath, metadata, outputPath) {
 
     return { success: true };
   } catch (error) {
-    throw new Error(`Failed to update PDF metadata: ${error.message}`);
-  }
-}
-
+    if (error.message.includes('parse')) {
+      throw new Error(`Failed to update PDF metadata: The file appears to be corrupted.`);
+    }
+    throw handlePdfError(error, inputPath, outputPath, 'Update PDF metadata'
 module.exports = { readMetadata, updateMetadata };

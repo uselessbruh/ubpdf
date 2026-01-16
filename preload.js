@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('pdfAPI', {
   selectImage: () => ipcRenderer.invoke('selectImage'),
   split: (inputPath, ranges, outputDir) => ipcRenderer.invoke('split', inputPath, ranges, outputDir),
   getPDFPageCount: (filePath) => ipcRenderer.invoke('getPDFPageCount', filePath),
+  getPDFPageDimensions: (filePath) => ipcRenderer.invoke('getPDFPageDimensions', filePath),
   organize: (inputPath, operations, outputPath) => ipcRenderer.invoke('organize', inputPath, operations, outputPath),
   getPDFThumbnails: (filePath) => ipcRenderer.invoke('getPDFThumbnails', filePath),
   watermark: (inputPath, options, outputPath) => ipcRenderer.invoke('watermark', inputPath, options, outputPath),

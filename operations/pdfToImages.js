@@ -1,9 +1,30 @@
-const poppler = require('pdf-poppler');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
 const path = require('path');
 const fs = require('fs');
+const { handlePdfError } = require('./errorHandler');
+
+const execFileAsync = promisify(execFile);
+
+// Path to Ghostscript - works in both dev and packaged app
+const getResourcePath = (relativePath) => {
+  // In packaged app, use process.resourcesPath
+  // In development, use the project root directory
+  if (process.env.NODE_ENV === 'production' && process.resourcesPath) {
+    return path.join(process.resourcesPath, relativePath);
+  }
+  // Development mode - go up from operations folder to project root
+  return path.join(__dirname, '..', relativePath);
+};
+
+// Detect system architecture and use appropriate Ghostscript version
+const is64Bit = process.arch === 'x64';
+const gsFolder = is64Bit ? 'gs64' : 'gs32';
+const gsExe = is64Bit ? 'gswin64c.exe' : 'gswin32c.exe';
+const GHOSTSCRIPT_PATH = getResourcePath(`executables/${gsFolder}/bin/${gsExe}`);
 
 /**
- * Convert PDF pages to images
+ * Convert PDF pages to images using Ghostscript
  * @param {string} inputPath - Path to input PDF
  * @param {Object} options - Conversion options
  *   - format: string - 'png', 'jpeg', 'tiff', 'bmp', 'webp'
@@ -32,6 +53,11 @@ module.exports = async (inputPath, options) => {
     throw new Error('Output folder is required');
   }
 
+  // Check if Ghostscript exists
+  if (!fs.existsSync(GHOSTSCRIPT_PATH)) {
+    throw new Error(`Ghostscript not found at: ${GHOSTSCRIPT_PATH}`);
+  }
+
   // Create output folder if it doesn't exist
   if (!fs.existsSync(outputFolder)) {
     fs.mkdirSync(outputFolder, { recursive: true });
@@ -50,42 +76,47 @@ module.exports = async (inputPath, options) => {
     outputPrefix = pdfName; // Will handle padding in post-processing
   }
 
-  // Configure pdf-poppler options
-  // Note: TIFF, BMP, WebP are not reliably supported by pdf-poppler, so we convert to PNG first
-  const actualFormat = (format === 'jpeg') ? 'jpeg' : 'png';
-  
-  const popplerOptions = {
-    format: actualFormat,
-    out_dir: outputFolder,
-    out_prefix: outputPrefix,
-    page: null // Will be set based on pageRange
+  // Map format to Ghostscript device
+  const deviceMap = {
+    'png': 'png16m',      // 24-bit RGB PNG
+    'jpeg': 'jpeg',       // JPEG
+    'jpg': 'jpeg',
+    'tiff': 'tiff24nc',   // 24-bit RGB TIFF
+    'tif': 'tiff24nc'
   };
 
-  // Add format-specific options
-  if (actualFormat === 'jpeg') {
-    popplerOptions.jpegopt = {
-      quality: quality,
-      progressive: false
-    };
-  } else {
-    popplerOptions.pngopt = {
-      compression: 6
-    };
+  const device = deviceMap[format.toLowerCase()] || 'png16m';
+  const ext = format.toLowerCase() === 'jpg' ? 'jpeg' : format.toLowerCase();
+
+  // Output file pattern for Ghostscript
+  const outputPattern = path.join(outputFolder, `${outputPrefix}-%d.${ext}`);
+
+  // Build Ghostscript arguments
+  const gsArgs = [
+    '-dNOPAUSE',
+    '-dBATCH',
+    '-dSAFER',
+    '-sDEVICE=' + device,
+    `-r${dpi}`,                    // Set resolution
+    '-dTextAlphaBits=4',           // Anti-aliasing for text
+    '-dGraphicsAlphaBits=4',       // Anti-aliasing for graphics
+  ];
+
+  // Add JPEG quality if applicable
+  if (format.toLowerCase() === 'jpeg' || format.toLowerCase() === 'jpg') {
+    gsArgs.push(`-dJPEGQ=${quality}`);
   }
 
-  // Set resolution using scale_to (DPI scaling)
-  popplerOptions.scale_to = dpi;
-  
-  // Set color mode
+  // Add grayscale or monochrome
   if (colorMode === 'grayscale') {
-    popplerOptions.gray = true;
+    gsArgs[3] = '-sDEVICE=pnggray';  // Override device for grayscale
   } else if (colorMode === 'monochrome') {
-    popplerOptions.mono = true;
+    gsArgs[3] = '-sDEVICE=pngmono';  // Override device for monochrome
   }
 
-  // Parse page range
+  // Add page range if specified
   if (pageRange !== 'all') {
-    // Handle formats like "1-5", "1,3,5", "1-3,5-7"
+    // Parse page range
     const ranges = pageRange.split(',').map(r => r.trim());
     const pages = [];
     
@@ -101,22 +132,24 @@ module.exports = async (inputPath, options) => {
       }
     }
     
-    // pdf-poppler expects first and last page
     if (pages.length > 0) {
       pages.sort((a, b) => a - b);
-      popplerOptions.page = pages[0];
-      popplerOptions.last_page = pages[pages.length - 1];
+      gsArgs.push(`-dFirstPage=${pages[0]}`);
+      gsArgs.push(`-dLastPage=${pages[pages.length - 1]}`);
     }
   }
 
+  gsArgs.push(`-sOutputFile=${outputPattern}`);
+  gsArgs.push(inputPath);
+
   try {
-    // Convert PDF to images
-    await poppler.convert(inputPath, popplerOptions);
+    // Execute Ghostscript
+    await execFileAsync(GHOSTSCRIPT_PATH, gsArgs);
 
     // Get list of created files
-    const actualExtension = actualFormat === 'jpeg' ? '.jpg' : '.png';
+    const fileExtension = `.${ext}`;
     let files = fs.readdirSync(outputFolder)
-      .filter(file => file.startsWith(outputPrefix) && (file.endsWith('.png') || file.endsWith('.jpg')))
+      .filter(file => file.startsWith(outputPrefix) && file.endsWith(fileExtension))
       .map(file => path.join(outputFolder, file))
       .sort();
 
@@ -124,9 +157,9 @@ module.exports = async (inputPath, options) => {
     if (naming === 'padded' && files.length > 0) {
       const paddingLength = files.length.toString().length;
       files = files.map((file, index) => {
-        const ext = path.extname(file);
+        const currentExt = path.extname(file);
         const pageNum = (index + 1).toString().padStart(paddingLength, '0');
-        const newName = `${pdfName}-${pageNum}${ext}`;
+        const newName = `${pdfName}-${pageNum}${currentExt}`;
         const newPath = path.join(outputFolder, newName);
         
         // Rename file
@@ -137,6 +170,9 @@ module.exports = async (inputPath, options) => {
 
     return files;
   } catch (error) {
-    throw new Error(`Failed to convert PDF to images: ${error.message}`);
+    if (!fs.existsSync(GHOSTSCRIPT_PATH)) {
+      throw new Error(`PDF to images conversion failed: Ghostscript not found at ${GHOSTSCRIPT_PATH}`);
+    }
+    throw handlePdfError(error, inputPath, '', 'PDF to images conversion');
   }
 };

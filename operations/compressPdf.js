@@ -2,20 +2,26 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
+const { handlePdfError } = require('./errorHandler');
 
 const execFileAsync = promisify(execFile);
 
 // Path to Ghostscript - works in both dev and packaged app
 const getResourcePath = (relativePath) => {
-  if (process.resourcesPath) {
-    // Packaged app
+  // In packaged app, use process.resourcesPath
+  // In development, use the project root directory
+  if (process.env.NODE_ENV === 'production' && process.resourcesPath) {
     return path.join(process.resourcesPath, relativePath);
   }
-  // Development
+  // Development mode - go up from operations folder to project root
   return path.join(__dirname, '..', relativePath);
 };
 
-const GHOSTSCRIPT_PATH = getResourcePath('executables/gswin64c.exe');
+// Detect system architecture and use appropriate Ghostscript version
+const is64Bit = process.arch === 'x64';
+const gsFolder = is64Bit ? 'gs64' : 'gs32';
+const gsExe = is64Bit ? 'gswin64c.exe' : 'gswin32c.exe';
+const GHOSTSCRIPT_PATH = getResourcePath(`executables/${gsFolder}/bin/${gsExe}`);
 
 /**
  * Compress a PDF using Ghostscript for real image compression
@@ -93,6 +99,11 @@ module.exports = async (inputPath, options, outputPath) => {
       saved: originalSize - compressedSize
     };
   } catch (error) {
-    throw new Error(`Failed to compress PDF: ${error.message}`);
+    // Check if Ghostscript exists
+    if (!fs.existsSync(GHOSTSCRIPT_PATH)) {
+      throw new Error(`Compression failed: Ghostscript not found at ${GHOSTSCRIPT_PATH}`);
+    }
+
+    throw handlePdfError(error, inputPath, outputPath, 'Compress');
   }
 };

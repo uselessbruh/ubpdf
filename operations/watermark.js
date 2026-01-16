@@ -1,5 +1,7 @@
 const { PDFDocument, rgb, degrees, StandardFonts } = require('pdf-lib');
 const fs = require('fs');
+const path = require('path');
+const { handlePdfError } = require('./errorHandler');
 
 /**
  * Add watermark to PDF pages
@@ -19,8 +21,22 @@ const fs = require('fs');
  * @param {string} outputPath - Path to save watermarked PDF
  */
 module.exports = async (inputPath, options, outputPath) => {
-  const data = fs.readFileSync(inputPath);
-  const pdfDoc = await PDFDocument.load(data);
+  try {
+    // Validate input file
+    if (!fs.existsSync(inputPath)) {
+      throw new Error(`Input file not found: ${path.basename(inputPath)}`);
+    }
+
+    // Validate watermark type
+    if (options.type === 'image' && (!options.imagePath || !fs.existsSync(options.imagePath))) {
+      throw new Error('Watermark image file not found or not specified');
+    }
+
+    const data = fs.readFileSync(inputPath);
+    const pdfDoc = await PDFDocument.load(data, { 
+      ignoreEncryption: true,
+      updateMetadata: false 
+    });
   const pages = pdfDoc.getPages();
 
   const {
@@ -84,7 +100,21 @@ module.exports = async (inputPath, options, outputPath) => {
 
   pages.forEach((page) => {
     const { width, height } = page.getSize();
-    const margin = 50;
+    const marginPercentage = 10; // 10% margin from edges, matches preview
+    const marginX = width * (marginPercentage / 100);
+    const marginY = height * (marginPercentage / 100);
+    
+    // Scale font size based on page width relative to A4 (595pt reference)
+    // This ensures the watermark looks proportional on all page sizes
+    const referencePage = 595; // A4 width in points
+    const scaleFactor = width / referencePage;
+    const scaledFontSize = fontSize * scaleFactor;
+    
+    // Scale image dimensions similarly
+    const scaledImageDims = imageDims ? {
+      width: imageDims.width * scaleFactor,
+      height: imageDims.height * scaleFactor
+    } : null;
 
     let centerX, centerY;
 
@@ -101,27 +131,27 @@ module.exports = async (inputPath, options, outputPath) => {
           break;
         case 'top':
           centerX = width / 2;
-          centerY = height - margin;
+          centerY = height - marginY;
           break;
         case 'bottom':
           centerX = width / 2;
-          centerY = margin;
+          centerY = marginY;
           break;
         case 'topLeft':
-          centerX = margin;
-          centerY = height - margin;
+          centerX = marginX;
+          centerY = height - marginY;
           break;
         case 'topRight':
-          centerX = width - margin;
-          centerY = height - margin;
+          centerX = width - marginX;
+          centerY = height - marginY;
           break;
         case 'bottomLeft':
-          centerX = margin;
-          centerY = margin;
+          centerX = marginX;
+          centerY = marginY;
           break;
         case 'bottomRight':
-          centerX = width - margin;
-          centerY = margin;
+          centerX = width - marginX;
+          centerY = marginY;
           break;
         default:
           centerX = width / 2;
@@ -129,14 +159,14 @@ module.exports = async (inputPath, options, outputPath) => {
       }
     }
 
-    if (type === 'image' && imageEmbed) {
+    if (type === 'image' && imageEmbed && scaledImageDims) {
       // For images, pdf-lib rotates around the bottom-left corner of the image
       // We need to place the image so its center is at centerX, centerY
       page.drawImage(imageEmbed, {
-        x: centerX - imageDims.width / 2,
-        y: centerY - imageDims.height / 2,
-        width: imageDims.width,
-        height: imageDims.height,
+        x: centerX - scaledImageDims.width / 2,
+        y: centerY - scaledImageDims.height / 2,
+        width: scaledImageDims.width,
+        height: scaledImageDims.height,
         opacity,
         rotate: degrees(-rotation),
       });
@@ -146,8 +176,8 @@ module.exports = async (inputPath, options, outputPath) => {
       // 1. Calculate text dimensions
       // 2. Position so that when rotation happens at x,y, the center stays at centerX, centerY
 
-      const textWidth = font.widthOfTextAtSize(text, fontSize);
-      const textHeight = fontSize;
+      const textWidth = font.widthOfTextAtSize(text, scaledFontSize);
+      const textHeight = scaledFontSize;
 
       // Convert rotation to radians for calculation
       const radians = (-rotation * Math.PI) / 180;
@@ -164,7 +194,7 @@ module.exports = async (inputPath, options, outputPath) => {
       page.drawText(text, {
         x: centerX + rotatedOffsetX,
         y: centerY + rotatedOffsetY,
-        size: fontSize,
+        size: scaledFontSize,
         font: font,
         color: rgb(color.r, color.g, color.b),
         opacity,
@@ -175,4 +205,10 @@ module.exports = async (inputPath, options, outputPath) => {
 
   const bytes = await pdfDoc.save();
   fs.writeFileSync(outputPath, bytes);
+  } catch (error) {
+    if (error.message.includes('Unsupported image format')) {
+      throw new Error('Failed to add watermark: Image must be PNG or JPEG format.');
+    }
+    throw handlePdfError(error, inputPath, outputPath, 'Add watermark');
+  }
 };

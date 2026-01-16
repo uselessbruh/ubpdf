@@ -3,6 +3,7 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
+const { handlePdfError } = require('./errorHandler');
 const execAsync = promisify(exec);
 
 /**
@@ -29,15 +30,28 @@ module.exports = async (inputPath, options, outputPath) => {
     throw new Error('User password is required');
   }
 
+  // Validate input file
+  if (!fs.existsSync(inputPath)) {
+    throw new Error(`Input file not found: ${path.basename(inputPath)}`);
+  }
+
   // Use local pdftk from project directory
   const getResourcePath = (relativePath) => {
-    if (process.resourcesPath) {
+    // In packaged app, use process.resourcesPath
+    // In development, use the project root directory
+    if (process.env.NODE_ENV === 'production' && process.resourcesPath) {
       return path.join(process.resourcesPath, relativePath);
     }
+    // Development mode - go up from operations folder to project root
     return path.join(__dirname, '..', relativePath);
   };
   
   const pdftkPath = getResourcePath('executables/bin/pdftk.exe');
+
+  // Check if pdftk executable exists
+  if (!fs.existsSync(pdftkPath)) {
+    throw new Error(`PDFtk not found at: ${pdftkPath}. PDF encryption requires PDFtk.`);
+  }
 
   try {
     // Use pdftk for encryption (most reliable cross-platform solution)
@@ -64,10 +78,9 @@ module.exports = async (inputPath, options, outputPath) => {
     
     return true;
   } catch (error) {
-    // Check if pdftk executable exists
-    if (!fs.existsSync(pdftkPath)) {
-      throw new Error(`PDFtk not found at: ${pdftkPath}`);
+    if (error.message.includes('password')) {
+      throw new Error('Failed to protect PDF: Invalid password format or password protection failed.');
     }
-    throw new Error(`Failed to protect PDF: ${error.message}`);
+    throw handlePdfError(error, inputPath, outputPath, 'Protect PDF');
   }
 };

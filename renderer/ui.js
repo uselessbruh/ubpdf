@@ -43,6 +43,7 @@ const fileInput = document.getElementById('files');
 const fileList = document.getElementById('fileList');
 
 let files = [];
+let filePreviewStates = {}; // Track preview state for each file
 
 selectMergeFilesBtn.onclick = () => {
   fileInput.click();
@@ -81,36 +82,98 @@ fileInput.onchange = () => {
   fileInput.value = ''; // Reset input to allow re-adding same file
 };
 
-function renderFileList() {
+function togglePreview(index) {
+  filePreviewStates[index] = !filePreviewStates[index];
+  renderFileList();
+}
+
+async function renderFileList() {
   fileList.innerHTML = '';
 
   if (files.length === 0) {
     mergeActionBar.style.display = 'none';
+    filePreviewStates = {};
     return;
   }
 
   mergeActionBar.style.display = 'block';
-
-  files.forEach((file, index) => {
-    const item = document.createElement('div');
-    item.className = 'file-item';
-    item.draggable = true;
-    item.dataset.index = index;
-
-    item.innerHTML = `
+  fileList.className = 'file-list';
+  
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
+    const showPreview = filePreviewStates[index] || false;
+    
+    const pdfContainer = document.createElement('div');
+    pdfContainer.className = 'pdf-file-container';
+    pdfContainer.dataset.fileIndex = index;
+    
+    // File header with controls
+    const fileHeader = document.createElement('div');
+    fileHeader.className = 'file-item';
+    fileHeader.draggable = true;
+    fileHeader.dataset.index = index;
+    
+    fileHeader.innerHTML = `
       <div class="file-info">
         <div class="file-number">${index + 1}</div>
         <div class="file-name" title="${file.name}">${file.name}</div>
       </div>
-      <button class="file-remove" data-index="${index}">✕ Remove</button>
+      <div class="file-actions">
+        <button class="btn-preview" data-index="${index}">
+          ${showPreview ? '📝 Hide' : '👁️ Preview'}
+        </button>
+        <button class="file-remove" data-index="${index}">✕ Remove</button>
+      </div>
     `;
+    
+    fileHeader.addEventListener('dragstart', handleDragStart);
+    fileHeader.addEventListener('dragover', handleDragOver);
+    fileHeader.addEventListener('drop', handleDrop);
+    fileHeader.addEventListener('dragend', handleDragEnd);
+    
+    pdfContainer.appendChild(fileHeader);
+    
+    // Thumbnail container (shown/hidden based on state)
+    if (showPreview) {
+      const thumbnailContainer = document.createElement('div');
+      thumbnailContainer.className = 'thumbnail-container';
+      thumbnailContainer.innerHTML = '<div class="loading-thumbnails">⏳ Loading preview...</div>';
+      pdfContainer.appendChild(thumbnailContainer);
+      
+      // Load thumbnails asynchronously
+      (async () => {
+        try {
+          const thumbnails = await window.pdfAPI.getPDFThumbnails(file.path);
+          thumbnailContainer.innerHTML = '';
+          
+          thumbnails.forEach((thumb, pageIndex) => {
+            const thumbItem = document.createElement('div');
+            thumbItem.className = 'thumbnail-item';
+            
+            thumbItem.innerHTML = `
+              <img src="${thumb}" alt="Page ${pageIndex + 1}" />
+              <div class="thumb-label">Page ${pageIndex + 1}</div>
+            `;
+            
+            thumbnailContainer.appendChild(thumbItem);
+          });
+        } catch (err) {
+          thumbnailContainer.innerHTML = '<div class="error-thumbnails">❌ Failed to load preview</div>';
+          console.error('Thumbnail error:', err);
+        }
+      })();
+    }
+    
+    fileList.appendChild(pdfContainer);
+  }
 
-    item.addEventListener('dragstart', handleDragStart);
-    item.addEventListener('dragover', handleDragOver);
-    item.addEventListener('drop', handleDrop);
-    item.addEventListener('dragend', handleDragEnd);
-
-    fileList.appendChild(item);
+  // Attach event handlers
+  document.querySelectorAll('.btn-preview').forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = parseInt(e.target.dataset.index);
+      togglePreview(idx);
+    };
   });
 
   // Attach remove handlers
@@ -119,6 +182,18 @@ function renderFileList() {
       e.stopPropagation();
       const idx = parseInt(e.target.dataset.index);
       files.splice(idx, 1);
+      delete filePreviewStates[idx];
+      // Reindex preview states
+      const newStates = {};
+      Object.keys(filePreviewStates).forEach(key => {
+        const oldIdx = parseInt(key);
+        if (oldIdx > idx) {
+          newStates[oldIdx - 1] = filePreviewStates[oldIdx];
+        } else if (oldIdx < idx) {
+          newStates[oldIdx] = filePreviewStates[oldIdx];
+        }
+      });
+      filePreviewStates = newStates;
       renderFileList();
     };
   });
@@ -212,11 +287,18 @@ const splitBtn = document.getElementById('splitBtn');
 const pagesPerFileInput = document.getElementById('pagesPerFile');
 const pagesDisplay = document.getElementById('pagesDisplay');
 const eachPageInfo = document.getElementById('eachPageInfo');
+const fixedPrefixInput = document.getElementById('fixedPrefix');
+const fixedSuffixInput = document.getElementById('fixedSuffix');
+const eachPrefixInput = document.getElementById('eachPrefix');
+const eachSuffixInput = document.getElementById('eachSuffix');
 
 let selectedPdf = null;
 let totalPdfPages = 0;
 let ranges = [];
 let currentSplitMode = 'range';
+let splitThumbnails = [];
+let selectedSplitPages = new Set();
+let splitPreviewVisible = false;
 
 // Drag and drop handlers
 splitDropzone.addEventListener('dragover', (e) => {
@@ -253,6 +335,7 @@ splitFileInput.onchange = async (e) => {
 
 async function loadPDF(filePath) {
   selectedPdf = filePath;
+  selectedSplitPages.clear();
 
   try {
     totalPdfPages = await window.pdfAPI.getPDFPageCount(filePath);
@@ -262,11 +345,20 @@ async function loadPDF(filePath) {
       <div class="info-content">
         <strong>${filePath}</strong>
         <p>${totalPdfPages} pages total</p>
+        <button id="toggleSplitPreviewBtn" class="preview-btn">📄 Show Preview</button>
       </div>
       <button class="change-btn" onclick="document.getElementById('splitFileInput').click()">Change</button>
     `;
     pdfInfo.classList.add('active');
     splitOptions.style.display = 'block';
+    splitPreviewVisible = false;
+    splitThumbnails = []; // Reset thumbnails
+    
+    // Reattach event listener to the new button
+    const previewBtn = document.getElementById('toggleSplitPreviewBtn');
+    if (previewBtn) {
+      previewBtn.onclick = toggleSplitPreview;
+    }
 
     // Initialize based on current mode
     if (currentSplitMode === 'range') {
@@ -281,6 +373,92 @@ async function loadPDF(filePath) {
     console.error(err);
     alert('❌ Failed to read PDF: ' + err.message);
   }
+}
+
+async function toggleSplitPreview() {
+  const previewContainer = document.getElementById('splitPreviewContainer');
+  const previewBtn = document.getElementById('toggleSplitPreviewBtn');
+  
+  if (!splitPreviewVisible) {
+    // Load thumbnails if not already loaded
+    if (splitThumbnails.length === 0 && selectedPdf) {
+      if (previewBtn) {
+        previewBtn.disabled = true;
+        previewBtn.textContent = '⏳ Loading...';
+      }
+      try {
+        splitThumbnails = await window.pdfAPI.getPDFThumbnails(selectedPdf);
+      } catch (err) {
+        alert('❌ Failed to load preview: ' + err.message);
+        if (previewBtn) {
+          previewBtn.disabled = false;
+          previewBtn.textContent = '📄 Show Preview';
+        }
+        return;
+      }
+      if (previewBtn) {
+        previewBtn.disabled = false;
+      }
+    }
+    // Show preview
+    renderSplitPreview();
+    splitPreviewVisible = true;
+    if (previewBtn) previewBtn.textContent = '📄 Hide Preview';
+  } else {
+    // Hide preview
+    if (previewContainer) {
+      previewContainer.style.display = 'none';
+    }
+    splitPreviewVisible = false;
+    if (previewBtn) previewBtn.textContent = '📄 Show Preview';
+  }
+}
+
+function renderSplitPreview() {
+  let previewContainer = document.getElementById('splitPreviewContainer');
+  if (!previewContainer) {
+    previewContainer = document.createElement('div');
+    previewContainer.id = 'splitPreviewContainer';
+    previewContainer.className = 'split-preview-container';
+    const splitOptions = document.getElementById('splitOptions');
+    if (splitOptions && splitOptions.parentElement) {
+      // Insert before splitOptions within the split-container
+      splitOptions.parentElement.insertBefore(previewContainer, splitOptions);
+    }
+  }
+  
+  previewContainer.style.display = 'block';
+  previewContainer.innerHTML = '<h3 style="margin: 20px 0 10px; font-size: 16px;">📄 PDF Pages Preview</h3>';
+  
+  const thumbnailGrid = document.createElement('div');
+  thumbnailGrid.className = 'split-thumbnail-grid';
+  
+  splitThumbnails.forEach((thumb, index) => {
+    const thumbItem = document.createElement('div');
+    thumbItem.className = 'split-thumbnail-item';
+    thumbItem.dataset.pageIndex = index;
+    
+    thumbItem.innerHTML = `
+      <img src="${thumb}" alt="Page ${index + 1}" />
+      <div class="split-thumb-label">Page ${index + 1}</div>
+      <div class="split-thumb-check">✓</div>
+    `;
+    
+    thumbItem.onclick = () => {
+      if (currentSplitMode === 'visual') {
+        thumbItem.classList.toggle('selected');
+        if (thumbItem.classList.contains('selected')) {
+          selectedSplitPages.add(index + 1);
+        } else {
+          selectedSplitPages.delete(index + 1);
+        }
+      }
+    };
+    
+    thumbnailGrid.appendChild(thumbItem);
+  });
+  
+  previewContainer.appendChild(thumbnailGrid);
 }
 
 // Mode switching
@@ -407,21 +585,25 @@ splitBtn.onclick = async () => {
       splitRanges = ranges;
     } else if (currentSplitMode === 'fixed') {
       const pagesPerFile = parseInt(pagesPerFileInput.value) || 5;
+      const prefix = fixedPrefixInput.value.trim() || 'part';
+      const suffix = fixedSuffixInput.value.trim();
       let partNum = 1;
       for (let i = 1; i <= totalPdfPages; i += pagesPerFile) {
         splitRanges.push({
           start: i,
           end: Math.min(i + pagesPerFile - 1, totalPdfPages),
-          name: `part${partNum}`,
+          name: `${prefix}${partNum}${suffix}`,
         });
         partNum++;
       }
     } else if (currentSplitMode === 'each') {
+      const prefix = eachPrefixInput.value.trim() || 'page';
+      const suffix = eachSuffixInput.value.trim();
       for (let i = 1; i <= totalPdfPages; i++) {
         splitRanges.push({
           start: i,
           end: i,
-          name: `page${i}`,
+          name: `${prefix}${i}${suffix}`,
         });
       }
     }
@@ -458,9 +640,28 @@ const rotateLeftBtn = document.getElementById('rotateLeftBtn');
 const rotateRightBtn = document.getElementById('rotateRightBtn');
 const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
 const organizeBtn = document.getElementById('organizeBtn');
+const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+const scrollRightBtn = document.getElementById('scrollRightBtn');
 
 let organizePages = [];
 let selectedOrganizePdf = null;
+
+// Page grid scroll navigation
+if (scrollLeftBtn && scrollRightBtn) {
+  scrollLeftBtn.onclick = () => {
+    pageGrid.scrollBy({ left: -250, behavior: 'smooth' });
+  };
+  
+  scrollRightBtn.onclick = () => {
+    pageGrid.scrollBy({ left: 250, behavior: 'smooth' });
+  };
+  
+  // Update button states based on scroll position
+  pageGrid.addEventListener('scroll', () => {
+    scrollLeftBtn.disabled = pageGrid.scrollLeft <= 0;
+    scrollRightBtn.disabled = pageGrid.scrollLeft >= (pageGrid.scrollWidth - pageGrid.clientWidth - 1);
+  });
+}
 
 // Drag and drop handlers
 organizeDropzone.addEventListener('dragover', (e) => {
@@ -509,6 +710,9 @@ async function loadOrganizePDF(filePath) {
     organizePdfInfo.classList.add('active');
 
     const thumbnails = await window.pdfAPI.getPDFThumbnails(filePath);
+    
+    // Extract filename from path
+    const fileName = filePath.split(/[\\\/]/).pop();
 
     organizePages = thumbnails.map((thumb, index) => ({
       pageIndex: index,
@@ -799,6 +1003,7 @@ let selectedWatermarkPdf = null;
 let selectedPosition = 'center';
 let watermarkType = 'text';
 let selectedImagePath = null;
+let pdfPageDimensions = { width: 595, height: 842 }; // Default A4 dimensions
 
 // Drag and drop handlers
 watermarkDropzone.addEventListener('dragover', (e) => {
@@ -838,12 +1043,34 @@ async function loadWatermarkPDF(filePath) {
 
   try {
     const pageCount = await window.pdfAPI.getPDFPageCount(filePath);
+    
+    // Try to get dimensions, fallback to default A4 if it fails
+    let dimensionText = '';
+    if (window.pdfAPI.getPDFPageDimensions) {
+      try {
+        const dimensions = await window.pdfAPI.getPDFPageDimensions(filePath);
+        pdfPageDimensions = dimensions;
+        dimensionText = ` • ${Math.round(dimensions.width)}×${Math.round(dimensions.height)}pt`;
+        
+        // Update preview container aspect ratio to match PDF
+        const aspectRatio = (dimensions.height / dimensions.width) * 100;
+        watermarkPreview.style.setProperty('--aspect-ratio', aspectRatio.toFixed(2));
+      } catch (dimError) {
+        console.warn('Could not get PDF dimensions, using default A4:', dimError);
+        pdfPageDimensions = { width: 595, height: 842 };
+        watermarkPreview.style.setProperty('--aspect-ratio', '141.4');
+      }
+    } else {
+      // API not available yet, use defaults
+      pdfPageDimensions = { width: 595, height: 842 };
+      watermarkPreview.style.setProperty('--aspect-ratio', '141.4');
+    }
 
     watermarkPdfInfo.innerHTML = `
       <div class="info-icon">💧</div>
       <div class="info-content">
         <strong>${filePath}</strong>
-        <p>${pageCount} pages • Ready for watermark</p>
+        <p>${pageCount} pages${dimensionText}</p>
       </div>
       <button class="change-btn" onclick="document.getElementById('watermarkFileInput').click()">Change</button>
     `;
@@ -1211,6 +1438,7 @@ const pageNumberFontPreview = document.getElementById('pageNumberFontPreview');
 
 let selectedPageNumbersPdf = null;
 let selectedPageNumberPosition = 'bottom';
+let pageNumbersPdfDimensions = { width: 595, height: 842 }; // Default A4
 
 // Update previews
 function updatePageNumberPreviews() {
@@ -1353,6 +1581,16 @@ async function loadPageNumbersPDF(filePath) {
 
   try {
     const pageCount = await window.pdfAPI.getPDFPageCount(filePath);
+    
+    // Fetch actual PDF page dimensions
+    pageNumbersPdfDimensions = await window.pdfAPI.getPDFPageDimensions(filePath);
+    
+    // Update preview aspect ratio based on actual page dimensions
+    const previewContainer = document.querySelector('.pageNumber-placement-preview');
+    if (previewContainer) {
+      const aspectRatio = pageNumbersPdfDimensions.height / pageNumbersPdfDimensions.width;
+      previewContainer.style.setProperty('--aspect-ratio', aspectRatio);
+    }
 
     pageNumbersPdfInfo.innerHTML = `
       <div class="info-icon">🔢</div>
@@ -1837,9 +2075,6 @@ const protectOptions = document.getElementById('protectOptions');
 const protectUserPassword = document.getElementById('protectUserPassword');
 const protectConfirmPassword = document.getElementById('protectConfirmPassword');
 const protectOwnerPassword = document.getElementById('protectOwnerPassword');
-const allowPrinting = document.getElementById('allowPrinting');
-const allowModification = document.getElementById('allowModification');
-const allowCopying = document.getElementById('allowCopying');
 const protectPdfBtn = document.getElementById('protectPdfBtn');
 
 let selectedProtectPdf = null;
@@ -1935,10 +2170,7 @@ protectPdfBtn.onclick = async () => {
 
     const options = {
       userPassword: userPwd,
-      ownerPassword: protectOwnerPassword.value.trim() || userPwd,
-      allowPrinting: allowPrinting.checked,
-      allowModification: allowModification.checked,
-      allowCopying: allowCopying.checked
+      ownerPassword: protectOwnerPassword.value.trim() || userPwd
     };
 
     await window.pdfAPI.protectPdf(selectedProtectPdf, options, savePath);

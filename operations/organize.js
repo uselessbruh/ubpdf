@@ -1,5 +1,7 @@
 const { PDFDocument, degrees } = require('pdf-lib');
 const fs = require('fs');
+const path = require('path');
+const { handlePdfError } = require('./errorHandler');
 
 /**
  * Organize PDF pages - reorder, rotate, delete
@@ -9,8 +11,21 @@ const fs = require('fs');
  * @param {string} outputPath - Path to save organized PDF
  */
 module.exports = async (inputPath, operations, outputPath) => {
-  const data = fs.readFileSync(inputPath);
-  const sourceDoc = await PDFDocument.load(data);
+  try {
+    // Validate input
+    if (!fs.existsSync(inputPath)) {
+      throw new Error(`Input file not found: ${path.basename(inputPath)}`);
+    }
+
+    if (!Array.isArray(operations) || operations.length === 0) {
+      throw new Error('At least one page operation is required');
+    }
+
+    const data = fs.readFileSync(inputPath);
+    const sourceDoc = await PDFDocument.load(data, { 
+      ignoreEncryption: true,
+      updateMetadata: false 
+    });
   const newDoc = await PDFDocument.create();
 
   // Filter out deleted pages and sort by new position
@@ -33,4 +48,7 @@ module.exports = async (inputPath, operations, outputPath) => {
 
   const bytes = await newDoc.save();
   fs.writeFileSync(outputPath, bytes);
+  } catch (error) {
+    throw handlePdfError(error, inputPath, outputPath, 'Organize PDF');
+  }
 };

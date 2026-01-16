@@ -83,10 +83,46 @@ ipcMain.handle('split', async (_, inputPath, ranges, outputDir) => {
 
 ipcMain.handle('getPDFPageCount', async (_, filePath) => {
   const fs = require('fs');
+  const path = require('path');
   const { PDFDocument } = require('pdf-lib');
-  const data = fs.readFileSync(filePath);
-  const doc = await PDFDocument.load(data);
-  return doc.getPageCount();
+  
+  try {
+    const data = fs.readFileSync(filePath);
+    const doc = await PDFDocument.load(data, { 
+      ignoreEncryption: true,
+      updateMetadata: false 
+    });
+    return doc.getPageCount();
+  } catch (error) {
+    const fileName = path.basename(filePath);
+    throw new Error(
+      `Failed to read PDF "${fileName}": ${error.message}. ` +
+      `This PDF file appears to be corrupted or has an invalid structure. ` +
+      `Please verify the file is valid by opening it in another PDF viewer.`
+    );
+  }
+});
+
+ipcMain.handle('getPDFPageDimensions', async (_, filePath) => {
+  const fs = require('fs');
+  const path = require('path');
+  const { PDFDocument } = require('pdf-lib');
+  
+  try {
+    const data = fs.readFileSync(filePath);
+    const doc = await PDFDocument.load(data, { 
+      ignoreEncryption: true,
+      updateMetadata: false 
+    });
+    const firstPage = doc.getPage(0);
+    const { width, height } = firstPage.getSize();
+    return { width, height };
+  } catch (error) {
+    const fileName = path.basename(filePath);
+    throw new Error(
+      `Failed to read PDF dimensions "${fileName}": ${error.message}.`
+    );
+  }
 });
 
 ipcMain.handle('getFileSize', async (_, filePath) => {
@@ -208,36 +244,6 @@ ipcMain.handle('getPDFThumbnails', async (_, filePath) => {
     return thumbnails;
   } catch (error) {
     console.error('Error generating thumbnails:', error);
-    // Fallback to placeholder if poppler fails
-    const { PDFDocument } = require('pdf-lib');
-    const { createCanvas } = require('canvas');
-
-    const data = fs.readFileSync(filePath);
-    const pdfDoc = await PDFDocument.load(data);
-    const pageCount = pdfDoc.getPageCount();
-
-    const thumbnails = [];
-
-    for (let i = 0; i < pageCount; i++) {
-      const canvas = createCanvas(200, 280);
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 200, 280);
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(0, 0, 200, 280);
-      ctx.fillStyle = '#f3f4f6';
-      ctx.fillRect(20, 20, 160, 220);
-      ctx.fillStyle = '#3b82f6';
-      ctx.font = 'bold 48px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`${i + 1}`, 100, 130);
-
-      thumbnails.push(canvas.toDataURL('image/png'));
-    }
-
-    return thumbnails;
+    return [];
   }
 });

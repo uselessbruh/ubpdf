@@ -18,12 +18,15 @@
                 <img src="logo.png" alt="UB PDF Logo" class="nav-logo">
                 <span class="nav-title">UB PDF</span>
             </div>
-            <div class="nav-links">
+            <div class="nav-links" id="navLinks">
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#download" class="nav-link">Download</a>
                 <a href="https://github.com/uselessbruh/ubpdf" target="_blank" class="nav-link">GitHub</a>
                 <a href="#download" class="btn-nav-download">Download Now</a>
             </div>
+            <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                ☰
+            </button>
         </div>
     </nav>
 
@@ -169,44 +172,88 @@
             </div>
 
             <div class="download-grid">
-                <!-- Windows 64-bit (Available) -->
+                <!-- Windows 64-bit Installer -->
                 <div class="download-card available">
                     <div class="download-header">
                         <div class="download-icon">🪟</div>
                         <div>
-                            <h3 class="download-title">Windows</h3>
-                            <p class="download-platform">64-bit</p>
+                            <h3 class="download-title">Windows 64-bit</h3>
+                            <p class="download-platform">Installer</p>
                         </div>
                     </div>
                     <div class="download-info">
                         <div class="download-version">Version 1.0.0</div>
-                        <div class="download-size">~ 370 MB</div>
+                        <div class="download-size">285 MB</div>
                     </div>
-                    <a href="https://github.com/uselessbruh/ubpdf/releases/download/v1.0.0/UB.PDF.Setup.1.0.0.exe"
+                    <a href="https://github.com/uselessbruh/ubpdf/releases/download/v1.0.0/UB.PDF.Setup.1.0.0-x64.exe"
                         class="btn-download">
                         <span class="btn-icon">⬇️</span>
-                        Download for Windows
+                        Download Installer
                     </a>
-                    <p class="download-note">Windows 10 or later</p>
+                    <p class="download-note">Windows 10 or later (x64)</p>
                 </div>
 
-                <!-- Windows 32-bit (Coming Soon) -->
-                <div class="download-card coming-soon">
+                <!-- Windows 64-bit Portable -->
+                <div class="download-card available">
                     <div class="download-header">
-                        <div class="download-icon">🪟</div>
+                        <div class="download-icon">📦</div>
                         <div>
-                            <h3 class="download-title">Windows</h3>
-                            <p class="download-platform">32-bit</p>
+                            <h3 class="download-title">Windows 64-bit</h3>
+                            <p class="download-platform">Portable</p>
                         </div>
                     </div>
                     <div class="download-info">
-                        <div class="download-version">Coming Soon</div>
+                        <div class="download-version">Version 1.0.0</div>
+                        <div class="download-size">335 MB</div>
                     </div>
-                    <button class="btn-download" disabled>
-                        <span class="btn-icon">⏳</span>
-                        Coming Soon
-                    </button>
-                    <p class="download-note">For older Windows systems</p>
+                    <a href="https://github.com/uselessbruh/ubpdf/releases/download/v1.0.0/UB.PDF-1.0.0-win-x64.zip"
+                        class="btn-download">
+                        <span class="btn-icon">⬇️</span>
+                        Download Portable
+                    </a>
+                    <p class="download-note">No installation required</p>
+                </div>
+
+                <!-- Windows 32-bit Installer -->
+                <div class="download-card available">
+                    <div class="download-header">
+                        <div class="download-icon">🪟</div>
+                        <div>
+                            <h3 class="download-title">Windows 32-bit</h3>
+                            <p class="download-platform">Installer</p>
+                        </div>
+                    </div>
+                    <div class="download-info">
+                        <div class="download-version">Version 1.0.0</div>
+                        <div class="download-size">348 MB</div>
+                    </div>
+                    <a href="https://github.com/uselessbruh/ubpdf/releases/download/v1.0.0/UB.PDF.Setup.1.0.0-ia32.exe"
+                        class="btn-download">
+                        <span class="btn-icon">⬇️</span>
+                        Download Installer
+                    </a>
+                    <p class="download-note">For older Windows systems (32-bit)</p>
+                </div>
+
+                <!-- Windows 32-bit Portable -->
+                <div class="download-card available">
+                    <div class="download-header">
+                        <div class="download-icon">📦</div>
+                        <div>
+                            <h3 class="download-title">Windows 32-bit</h3>
+                            <p class="download-platform">Portable</p>
+                        </div>
+                    </div>
+                    <div class="download-info">
+                        <div class="download-version">Version 1.0.0</div>
+                        <div class="download-size">393 MB</div>
+                    </div>
+                    <a href="https://github.com/uselessbruh/ubpdf/releases/download/v1.0.0/UB.PDF-1.0.0-win-ia32.zip"
+                        class="btn-download">
+                        <span class="btn-icon">⬇️</span>
+                        Download Portable
+                    </a>
+                    <p class="download-note">No installation required</p>
                 </div>
 
                 <!-- Ubuntu (Coming Soon) -->

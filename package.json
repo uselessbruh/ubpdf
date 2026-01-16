@@ -9,7 +9,7 @@
     "build": "electron-builder",
     "build:win32": "electron-builder --win --ia32",
     "build:win64": "electron-builder --win --x64",
-    "build:win": "electron-builder --win --ia32 --x64",
+    "build:win": "npm run build:win64 && npm run build:win32",
     "build:linux": "electron-builder --linux AppImage deb",
     "build:all": "electron-builder --win --linux"
   },
@@ -20,29 +20,45 @@
       "output": "release"
     },
     "files": [
-      "**/*",
+      "main.js",
+      "preload.js",
+      "package.json",
+      "mainpage/**/*",
+      "renderer/**/*",
+      "operations/**/*",
+      "assets/**/*",
       "!python_converter/**/*",
       "!release/**/*",
+      "!executables/**/*",
       "!.git",
-      "!.gitignore"
+      "!.gitignore",
+      "!*.bat",
+      "!*.sh",
+      "!*.md",
+      "!node_modules/**/test/**",
+      "!node_modules/**/tests/**",
+      "!node_modules/**/*.md",
+      "!node_modules/**/.github/**"
+    ],
+    "asarUnpack": [
+      "node_modules/canvas/**/*"
     ],
     "extraResources": [
       {
         "from": "executables",
         "to": "executables",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       }
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64",
-            "ia32"
-          ]
+          "arch": ["ia32"]
+        },
+        {
+          "target": "zip",
+          "arch": ["ia32"]
         }
       ],
       "icon": "assets/logo.ico",
@@ -74,7 +90,6 @@
     }
   },
   "dependencies": {
-    "canvas": "^3.2.0",
     "pdf-lib": "^1.17.1",
     "pdf-poppler": "^0.2.3",
     "pdfjs-dist": "^4.0.379"

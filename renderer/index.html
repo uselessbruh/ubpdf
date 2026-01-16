@@ -170,6 +170,21 @@
                   <label>Pages per file:</label>
                   <input type="number" id="pagesPerFile" value="5" min="1" class="number-input" />
                   <p class="config-hint">Each output file will contain <strong id="pagesDisplay">5</strong> pages</p>
+                  
+                  <div class="naming-section">
+                    <h4>File Naming</h4>
+                    <div class="naming-inputs">
+                      <div class="input-group">
+                        <label>Prefix:</label>
+                        <input type="text" id="fixedPrefix" placeholder="part" class="text-input" />
+                      </div>
+                      <div class="input-group">
+                        <label>Suffix:</label>
+                        <input type="text" id="fixedSuffix" placeholder="" class="text-input" />
+                      </div>
+                    </div>
+                    <p class="config-hint">Example: prefix<strong>1</strong>suffix.pdf, prefix<strong>2</strong>suffix.pdf</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -185,6 +200,21 @@
                     <strong>Output:</strong>
                     <p id="eachPageInfo">Will create 0 individual PDF files</p>
                   </div>
+                </div>
+                
+                <div class="naming-section">
+                  <h4>File Naming</h4>
+                  <div class="naming-inputs">
+                    <div class="input-group">
+                      <label>Prefix:</label>
+                      <input type="text" id="eachPrefix" placeholder="page" class="text-input" />
+                    </div>
+                    <div class="input-group">
+                      <label>Suffix:</label>
+                      <input type="text" id="eachSuffix" placeholder="" class="text-input" />
+                    </div>
+                  </div>
+                  <p class="config-hint">Example: prefix<strong>1</strong>suffix.pdf, prefix<strong>2</strong>suffix.pdf</p>
                 </div>
               </div>
             </div>
@@ -239,7 +269,15 @@
               </div>
             </div>
 
-            <div id="pageGrid" class="page-grid"></div>
+            <div class="page-grid-wrapper">
+              <div class="page-grid-nav left">
+                <button id="scrollLeftBtn" title="Scroll Left">◀</button>
+              </div>
+              <div id="pageGrid" class="page-grid"></div>
+              <div class="page-grid-nav right">
+                <button id="scrollRightBtn" title="Scroll Right">▶</button>
+              </div>
+            </div>
 
             <div class="action-bar">
               <button id="organizeBtn" class="btn-primary">
@@ -770,24 +808,6 @@
               <label>Owner Password (Optional)</label>
               <input type="password" id="protectOwnerPassword" class="text-input"
                 placeholder="Password for permissions (optional)" />
-            </div>
-
-            <div class="form-group">
-              <label>Permissions</label>
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="allowPrinting" checked />
-                  <span>Allow Printing</span>
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" id="allowModification" />
-                  <span>Allow Modification</span>
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" id="allowCopying" />
-                  <span>Allow Copying Text</span>
-                </label>
-              </div>
             </div>
           </div>
 
