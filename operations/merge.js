@@ -10,19 +10,19 @@ module.exports = async (files, outPath) => {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const fileName = path.basename(file);
-      
+
       try {
         const data = fs.readFileSync(file);
-        
+
         // Try loading with ignoreEncryption option for better compatibility
-        const doc = await PDFDocument.load(data, { 
+        const doc = await PDFDocument.load(data, {
           ignoreEncryption: true,
-          updateMetadata: false 
+          updateMetadata: false
         });
-        
+
         const pages = await output.copyPages(doc, doc.getPageIndices());
         pages.forEach((page) => output.addPage(page));
-        
+
       } catch (error) {
         // Handle file-specific error with context
         const handledError = handlePdfError(error, file, '', 'Merge');

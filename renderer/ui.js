@@ -98,21 +98,21 @@ async function renderFileList() {
 
   mergeActionBar.style.display = 'block';
   fileList.className = 'file-list';
-  
+
   for (let index = 0; index < files.length; index++) {
     const file = files[index];
     const showPreview = filePreviewStates[index] || false;
-    
+
     const pdfContainer = document.createElement('div');
     pdfContainer.className = 'pdf-file-container';
     pdfContainer.dataset.fileIndex = index;
-    
+
     // File header with controls
     const fileHeader = document.createElement('div');
     fileHeader.className = 'file-item';
     fileHeader.draggable = true;
     fileHeader.dataset.index = index;
-    
+
     fileHeader.innerHTML = `
       <div class="file-info">
         <div class="file-number">${index + 1}</div>
@@ -125,36 +125,36 @@ async function renderFileList() {
         <button class="file-remove" data-index="${index}">✕ Remove</button>
       </div>
     `;
-    
+
     fileHeader.addEventListener('dragstart', handleDragStart);
     fileHeader.addEventListener('dragover', handleDragOver);
     fileHeader.addEventListener('drop', handleDrop);
     fileHeader.addEventListener('dragend', handleDragEnd);
-    
+
     pdfContainer.appendChild(fileHeader);
-    
+
     // Thumbnail container (shown/hidden based on state)
     if (showPreview) {
       const thumbnailContainer = document.createElement('div');
       thumbnailContainer.className = 'thumbnail-container';
       thumbnailContainer.innerHTML = '<div class="loading-thumbnails">⏳ Loading preview...</div>';
       pdfContainer.appendChild(thumbnailContainer);
-      
+
       // Load thumbnails asynchronously
       (async () => {
         try {
           const thumbnails = await window.pdfAPI.getPDFThumbnails(file.path);
           thumbnailContainer.innerHTML = '';
-          
+
           thumbnails.forEach((thumb, pageIndex) => {
             const thumbItem = document.createElement('div');
             thumbItem.className = 'thumbnail-item';
-            
+
             thumbItem.innerHTML = `
               <img src="${thumb}" alt="Page ${pageIndex + 1}" />
               <div class="thumb-label">Page ${pageIndex + 1}</div>
             `;
-            
+
             thumbnailContainer.appendChild(thumbItem);
           });
         } catch (err) {
@@ -163,7 +163,7 @@ async function renderFileList() {
         }
       })();
     }
-    
+
     fileList.appendChild(pdfContainer);
   }
 
@@ -353,7 +353,7 @@ async function loadPDF(filePath) {
     splitOptions.style.display = 'block';
     splitPreviewVisible = false;
     splitThumbnails = []; // Reset thumbnails
-    
+
     // Reattach event listener to the new button
     const previewBtn = document.getElementById('toggleSplitPreviewBtn');
     if (previewBtn) {
@@ -378,7 +378,7 @@ async function loadPDF(filePath) {
 async function toggleSplitPreview() {
   const previewContainer = document.getElementById('splitPreviewContainer');
   const previewBtn = document.getElementById('toggleSplitPreviewBtn');
-  
+
   if (!splitPreviewVisible) {
     // Load thumbnails if not already loaded
     if (splitThumbnails.length === 0 && selectedPdf) {
@@ -426,24 +426,24 @@ function renderSplitPreview() {
       splitOptions.parentElement.insertBefore(previewContainer, splitOptions);
     }
   }
-  
+
   previewContainer.style.display = 'block';
   previewContainer.innerHTML = '<h3 style="margin: 20px 0 10px; font-size: 16px;">📄 PDF Pages Preview</h3>';
-  
+
   const thumbnailGrid = document.createElement('div');
   thumbnailGrid.className = 'split-thumbnail-grid';
-  
+
   splitThumbnails.forEach((thumb, index) => {
     const thumbItem = document.createElement('div');
     thumbItem.className = 'split-thumbnail-item';
     thumbItem.dataset.pageIndex = index;
-    
+
     thumbItem.innerHTML = `
       <img src="${thumb}" alt="Page ${index + 1}" />
       <div class="split-thumb-label">Page ${index + 1}</div>
       <div class="split-thumb-check">✓</div>
     `;
-    
+
     thumbItem.onclick = () => {
       if (currentSplitMode === 'visual') {
         thumbItem.classList.toggle('selected');
@@ -454,10 +454,10 @@ function renderSplitPreview() {
         }
       }
     };
-    
+
     thumbnailGrid.appendChild(thumbItem);
   });
-  
+
   previewContainer.appendChild(thumbnailGrid);
 }
 
@@ -651,11 +651,11 @@ if (scrollLeftBtn && scrollRightBtn) {
   scrollLeftBtn.onclick = () => {
     pageGrid.scrollBy({ left: -250, behavior: 'smooth' });
   };
-  
+
   scrollRightBtn.onclick = () => {
     pageGrid.scrollBy({ left: 250, behavior: 'smooth' });
   };
-  
+
   // Update button states based on scroll position
   pageGrid.addEventListener('scroll', () => {
     scrollLeftBtn.disabled = pageGrid.scrollLeft <= 0;
@@ -710,7 +710,7 @@ async function loadOrganizePDF(filePath) {
     organizePdfInfo.classList.add('active');
 
     const thumbnails = await window.pdfAPI.getPDFThumbnails(filePath);
-    
+
     // Extract filename from path
     const fileName = filePath.split(/[\\\/]/).pop();
 
@@ -1043,7 +1043,7 @@ async function loadWatermarkPDF(filePath) {
 
   try {
     const pageCount = await window.pdfAPI.getPDFPageCount(filePath);
-    
+
     // Try to get dimensions, fallback to default A4 if it fails
     let dimensionText = '';
     if (window.pdfAPI.getPDFPageDimensions) {
@@ -1051,7 +1051,7 @@ async function loadWatermarkPDF(filePath) {
         const dimensions = await window.pdfAPI.getPDFPageDimensions(filePath);
         pdfPageDimensions = dimensions;
         dimensionText = ` • ${Math.round(dimensions.width)}×${Math.round(dimensions.height)}pt`;
-        
+
         // Update preview container aspect ratio to match PDF
         const aspectRatio = (dimensions.height / dimensions.width) * 100;
         watermarkPreview.style.setProperty('--aspect-ratio', aspectRatio.toFixed(2));
@@ -1581,10 +1581,10 @@ async function loadPageNumbersPDF(filePath) {
 
   try {
     const pageCount = await window.pdfAPI.getPDFPageCount(filePath);
-    
+
     // Fetch actual PDF page dimensions
     pageNumbersPdfDimensions = await window.pdfAPI.getPDFPageDimensions(filePath);
-    
+
     // Update preview aspect ratio based on actual page dimensions
     const previewContainer = document.querySelector('.pageNumber-placement-preview');
     if (previewContainer) {

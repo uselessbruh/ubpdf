@@ -45,7 +45,7 @@ module.exports = async (inputPath, options, outputPath) => {
     // Development mode - go up from operations folder to project root
     return path.join(__dirname, '..', relativePath);
   };
-  
+
   const pdftkPath = getResourcePath('executables/bin/pdftk.exe');
 
   // Check if pdftk executable exists
@@ -60,9 +60,9 @@ module.exports = async (inputPath, options, outputPath) => {
     if (allowPrinting) permissions.push('Printing');
     if (allowModification) permissions.push('ModifyContents');
     if (allowCopying) permissions.push('CopyContents');
-    
+
     const permString = permissions.length > 0 ? permissions.join(' ') : 'none';
-    
+
     // PDFtk requires different passwords or no owner password
     // If owner password is same as user password or not provided, omit it
     let command;
@@ -73,9 +73,9 @@ module.exports = async (inputPath, options, outputPath) => {
       // Omit owner password if not provided or same as user password
       command = `"${pdftkPath}" "${inputPath}" output "${outputPath}" user_pw "${userPassword}" allow ${permString} encrypt_128bit`;
     }
-    
+
     await execAsync(command);
-    
+
     return true;
   } catch (error) {
     if (error.message.includes('password')) {

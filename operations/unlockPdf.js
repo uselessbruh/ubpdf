@@ -35,26 +35,26 @@ module.exports = async (inputPath, password, outputPath) => {
         // Development mode - go up from operations folder to project root
         return path.join(__dirname, '..', relativePath);
       };
-      
+
       const pdftkPath = getResourcePath('executables/bin/pdftk.exe');
-      
+
       // Check if pdftk exists
       if (!fs.existsSync(pdftkPath)) {
         throw new Error('PDFtk not available');
       }
-      
+
       // pdftk command: pdftk input.pdf input_pw <password> output output.pdf
       const command = `"${pdftkPath}" "${inputPath}" input_pw "${password}" output "${outputPath}"`;
-      
+
       await execAsync(command);
-      
+
       return true;
     } catch (pdftkError) {
       // If pdftk fails, try with pdf-lib
       console.warn('pdftk not available or failed, trying pdf-lib');
-      
+
       const existingPdfBytes = fs.readFileSync(inputPath);
-      
+
       // Try to load with password using pdf-lib
       const pdfDoc = await PDFDocument.load(existingPdfBytes, {
         ignoreEncryption: true
@@ -63,7 +63,7 @@ module.exports = async (inputPath, password, outputPath) => {
       // Save without encryption
       const pdfBytes = await pdfDoc.save();
       fs.writeFileSync(outputPath, pdfBytes);
-      
+
       return true;
     }
   } catch (error) {

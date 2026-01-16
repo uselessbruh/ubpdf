@@ -70,9 +70,9 @@ module.exports = async (inputPath, options, outputPath) => {
     }
 
     const data = fs.readFileSync(inputPath);
-    const pdfDoc = await PDFDocument.load(data, { 
+    const pdfDoc = await PDFDocument.load(data, {
       ignoreEncryption: true,
-      updateMetadata: false 
+      updateMetadata: false
     });
     const pages = pdfDoc.getPages();
     const totalPages = pages.length;
@@ -113,11 +113,11 @@ module.exports = async (inputPath, options, outputPath) => {
     // Calculate adjusted numbering based on excluded pages
     let adjustedPageNumbers = [];
     let currentNumber = startFrom;
-    
+
     pages.forEach((page, index) => {
       const actualPageNumber = index + 1;
       const excludePages = options.excludePages || [];
-    
+
       if (excludePages.includes(actualPageNumber)) {
         adjustedPageNumbers.push(null); // Excluded completely
       } else {
@@ -130,27 +130,27 @@ module.exports = async (inputPath, options, outputPath) => {
       const { width, height } = page.getSize();
       const actualPageNumber = index + 1; // 1-indexed page number
       const currentPageNumber = adjustedPageNumbers[index];
-      
+
       // Scale font size based on page width relative to A4 (595pt reference)
       const referencePage = 595; // A4 width in points
       const scaleFactor = width / referencePage;
       const scaledFontSize = fontSize * scaleFactor;
       const scaledMargin = margin * scaleFactor;
-      
+
       // Skip if page is excluded from counting
       if (currentPageNumber === null) {
         return;
       }
-      
+
       // Skip this page if it's in the skip list (hide number but keep counting)
       if (skipPages.includes(actualPageNumber)) {
         return;
       }
-      
+
       // Convert number to selected style
       const styledNumber = convertNumberStyle(currentPageNumber, style);
       const styledTotal = convertNumberStyle(totalPages, style);
-      
+
       // Generate page number text based on format
       let pageText;
       switch (format) {
@@ -170,7 +170,7 @@ module.exports = async (inputPath, options, outputPath) => {
         default:
           pageText = `${styledNumber}`;
       }
-      
+
       // Calculate text width for positioning
       const textWidth = font.widthOfTextAtSize(pageText, scaledFontSize);
 

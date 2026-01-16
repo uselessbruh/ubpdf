@@ -85,12 +85,12 @@ ipcMain.handle('getPDFPageCount', async (_, filePath) => {
   const fs = require('fs');
   const path = require('path');
   const { PDFDocument } = require('pdf-lib');
-  
+
   try {
     const data = fs.readFileSync(filePath);
-    const doc = await PDFDocument.load(data, { 
+    const doc = await PDFDocument.load(data, {
       ignoreEncryption: true,
-      updateMetadata: false 
+      updateMetadata: false
     });
     return doc.getPageCount();
   } catch (error) {
@@ -107,12 +107,12 @@ ipcMain.handle('getPDFPageDimensions', async (_, filePath) => {
   const fs = require('fs');
   const path = require('path');
   const { PDFDocument } = require('pdf-lib');
-  
+
   try {
     const data = fs.readFileSync(filePath);
-    const doc = await PDFDocument.load(data, { 
+    const doc = await PDFDocument.load(data, {
       ignoreEncryption: true,
-      updateMetadata: false 
+      updateMetadata: false
     });
     const firstPage = doc.getPage(0);
     const { width, height } = firstPage.getSize();

@@ -15,9 +15,9 @@ async function readMetadata(inputPath) {
     }
 
     const existingPdfBytes = fs.readFileSync(inputPath);
-    const pdfDoc = await PDFDocument.load(existingPdfBytes, { 
+    const pdfDoc = await PDFDocument.load(existingPdfBytes, {
       ignoreEncryption: true,
-      updateMetadata: false 
+      updateMetadata: false
     });
 
     return {
@@ -48,9 +48,9 @@ async function updateMetadata(inputPath, metadata, outputPath) {
     }
 
     const existingPdfBytes = fs.readFileSync(inputPath);
-    const pdfDoc = await PDFDocument.load(existingPdfBytes, { 
+    const pdfDoc = await PDFDocument.load(existingPdfBytes, {
       ignoreEncryption: true,
-      updateMetadata: false 
+      updateMetadata: false
     });
 
     // Update metadata fields

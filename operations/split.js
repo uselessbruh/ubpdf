@@ -27,9 +27,9 @@ module.exports = async (inputPath, ranges, outputDir) => {
     }
 
     const data = fs.readFileSync(inputPath);
-    const sourceDoc = await PDFDocument.load(data, { 
+    const sourceDoc = await PDFDocument.load(data, {
       ignoreEncryption: true,
-      updateMetadata: false 
+      updateMetadata: false
     });
     const totalPages = sourceDoc.getPageCount();
 

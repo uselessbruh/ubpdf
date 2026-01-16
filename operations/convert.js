@@ -7,13 +7,13 @@ const execFileAsync = promisify(execFile);
 
 // Path to converter executable - works in both dev and packaged app
 const getResourcePath = (relativePath) => {
-  // In packaged app, resources are in app.asar.unpacked or resources folder
-  if (process.resourcesPath) {
-    // Packaged app - use process.resourcesPath which points to resources folder
-    return path.join(process.resourcesPath, relativePath);
-  }
-  // Development mode - go up from operations folder to project root
-  return path.join(__dirname, '..', relativePath);
+    // In packaged app, resources are in app.asar.unpacked or resources folder
+    if (process.resourcesPath) {
+        // Packaged app - use process.resourcesPath which points to resources folder
+        return path.join(process.resourcesPath, relativePath);
+    }
+    // Development mode - go up from operations folder to project root
+    return path.join(__dirname, '..', relativePath);
 };
 
 // Detect system architecture and use appropriate converter version
@@ -41,9 +41,9 @@ async function convert(conversionType, inputPath, outputPath) {
         }
 
         // Validate conversion type
-        const validTypes = ['pdf-to-word', 'word-to-pdf', 'pdf-to-excel', 'excel-to-pdf', 
-                           'html-to-pdf', 'ppt-to-pdf', 'pdf-to-html', 'pdf-to-ppt',
-                           'pdf-to-png', 'pdf-to-jpeg', 'pdf-to-jpg', 'pdf-to-tiff'];
+        const validTypes = ['pdf-to-word', 'word-to-pdf', 'pdf-to-excel', 'excel-to-pdf',
+            'html-to-pdf', 'ppt-to-pdf', 'pdf-to-html', 'pdf-to-ppt',
+            'pdf-to-png', 'pdf-to-jpeg', 'pdf-to-jpg', 'pdf-to-tiff'];
         if (!validTypes.includes(conversionType)) {
             throw new Error(`Invalid conversion type: ${conversionType}`);
         }
@@ -73,36 +73,36 @@ async function convert(conversionType, inputPath, outputPath) {
         };
     } catch (error) {
         console.error('Conversion error:', error);
-        
+
         // Handle permission errors
-        if (error.code === 'EACCES' || error.code === 'EPERM' || error.code === 'EBUSY' || 
+        if (error.code === 'EACCES' || error.code === 'EPERM' || error.code === 'EBUSY' ||
             error.message.includes('Permission denied') || error.message.includes('Errno 13')) {
             const fileName = path.basename(outputPath);
             throw new Error(`Cannot save ${fileName}: File is open in another program or you don't have write permissions. Please close the file and try again.`);
         }
-        
+
         // Handle corrupted file errors
-        if (error.message.includes('parse') || error.message.includes('corrupted') || 
+        if (error.message.includes('parse') || error.message.includes('corrupted') ||
             error.message.includes('invalid') || error.message.includes('damaged') ||
             error.message.includes('format') || error.message.includes('reading')) {
             throw new Error(`The file "${path.basename(inputPath)}" appears to be corrupted or invalid. Please check the file and try again.`);
         }
-        
+
         // Handle file not found errors
         if (error.message.includes('not found') || error.code === 'ENOENT') {
             throw error;
         }
-        
+
         // Handle password protected files
         if (error.message.includes('password') || error.message.includes('encrypted')) {
             throw new Error('The file is password-protected. Please unlock it first using the Unlock PDF tool.');
         }
-        
+
         // Handle Ghostscript errors
         if (error.message.includes('Ghostscript')) {
             throw new Error('Conversion failed: Required dependencies are missing.');
         }
-        
+
         throw new Error(`Failed to convert file: ${error.message}`);
     }
 }

@@ -65,7 +65,7 @@ module.exports = async (inputPath, options) => {
 
   // Get PDF name without extension for output naming
   const pdfName = path.basename(inputPath, path.extname(inputPath));
-  
+
   // Determine output prefix based on naming option
   let outputPrefix = pdfName;
   if (naming === 'custom') {
@@ -119,7 +119,7 @@ module.exports = async (inputPath, options) => {
     // Parse page range
     const ranges = pageRange.split(',').map(r => r.trim());
     const pages = [];
-    
+
     for (const range of ranges) {
       if (range.includes('-')) {
         const [start, end] = range.split('-').map(n => parseInt(n.trim()));
@@ -131,7 +131,7 @@ module.exports = async (inputPath, options) => {
         if (!pages.includes(pageNum)) pages.push(pageNum);
       }
     }
-    
+
     if (pages.length > 0) {
       pages.sort((a, b) => a - b);
       gsArgs.push(`-dFirstPage=${pages[0]}`);
@@ -161,7 +161,7 @@ module.exports = async (inputPath, options) => {
         const pageNum = (index + 1).toString().padStart(paddingLength, '0');
         const newName = `${pdfName}-${pageNum}${currentExt}`;
         const newPath = path.join(outputFolder, newName);
-        
+
         // Rename file
         fs.renameSync(file, newPath);
         return newPath;

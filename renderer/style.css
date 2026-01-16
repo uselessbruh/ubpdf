@@ -1346,7 +1346,8 @@ body {
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  --aspect-ratio: 141.4; /* Default A4 */
+  --aspect-ratio: 141.4;
+  /* Default A4 */
 }
 
 .watermark-preview::before {
@@ -2099,7 +2100,7 @@ body {
     gap: 8px;
     padding: 12px;
   }
-  
+
   .split-thumbnail-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 12px;

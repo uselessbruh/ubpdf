@@ -74,7 +74,7 @@ module.exports = async (inputPath, options, outputPath) => {
     if (compressImages) {
       // Calculate DPI based on imageQuality (10-100 maps to 72-300 DPI)
       const dpi = Math.round(72 + (imageQuality / 100) * 228);
-      
+
       gsArgs.splice(7, 0,
         '-dDownsampleColorImages=true',
         `-dColorImageResolution=${dpi}`,
